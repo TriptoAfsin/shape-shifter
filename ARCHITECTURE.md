@@ -138,8 +138,17 @@ effective(user) = visibleShape(user, org ⊕ team overlay ⊕ personal overlay)
       "layout": "kanban",
       "groupBy": "stage",
       "columns": ["name", "company", "value", "owner"],
-      "filter": { "field": "region", "eq": "$me.region" },
-      "sort": { "field": "value", "dir": "desc" }
+      "filters": [
+        { "field": "region", "eq": "$me.region" },
+        { "field": "stage", "in": ["lead", "qualified", "proposal", "negotiation"] }
+      ],
+      "sort": { "field": "value", "dir": "desc" },
+      "kpis": ["pipeline", "won", "closing30", "win"],
+      "charts": [
+        { "id": "sum-value-by-stage", "type": "bar", "groupBy": "stage", "measure": { "agg": "sum", "field": "value" } },
+        { "id": "sum-value-by-company", "type": "donut", "groupBy": "company", "measure": { "agg": "sum", "field": "value" } },
+        { "id": "sum-value-by-closeDate", "type": "line", "groupBy": "closeDate", "measure": { "agg": "sum", "field": "value" } }
+      ]
     }
   },
   "workflow": {
@@ -164,6 +173,8 @@ effective(user) = visibleShape(user, org ⊕ team overlay ⊕ personal overlay)
 
 - Ops are `set | add | remove` on JSON Pointer paths, applied in order to a copy.
 - `$me.*` tokens are resolved server-side per viewer.
+- KPIs reference **named core metrics** (`pipeline`, `won`, `closing30`, `margin`, …). A shape picks which ones appear but can't define new math, and a metric over a restricted field is hidden from people who can't read that field.
+- One request can touch many parts at once. *"Set me up for my territory"* is a single patch that changes the filters, swaps a chart, replaces the KPIs and re-sorts. The guard checks it as a whole.
 - Patches are small on purpose: they are reviewable, replayable and easy to explain.
 
 **Version records:** `{ version, scope, author, intent, ops | snapshot, at }`.
@@ -335,7 +346,7 @@ The [skill](SKILL/SKILL.md) covers both paths step by step.
 | Roles, redaction, invariants | [`demo/src/core/policy.js`](demo/src/core/policy.js) |
 | Base shape, validator, visibility | [`demo/src/shape/spec.js`](demo/src/shape/spec.js) |
 | Patch ops, reshapeable allowlist | [`demo/src/shape/patch.js`](demo/src/shape/patch.js) |
-| Versions, overlays, rollback | [`demo/src/shape/registry.js`](demo/src/shape/registry.js) |
+| Versions, overlays, rollback (UI: History sidebar) | [`demo/src/shape/registry.js`](demo/src/shape/registry.js) |
 | Brain layer (deterministic stand-in for the AI models) | [`demo/src/pipeline/interpret.js`](demo/src/pipeline/interpret.js) |
 | Brain harness (budgets, contract + retry, hooks, traces) | [`demo/src/pipeline/harness.js`](demo/src/pipeline/harness.js) |
 | Guard | [`demo/src/pipeline/guard.js`](demo/src/pipeline/guard.js) |

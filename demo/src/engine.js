@@ -1,7 +1,7 @@
 // intent -> brain (inside its harness) -> guard -> preview -> apply -> (rollback).
 
 import { randomUUID } from 'node:crypto';
-import { DEALS } from './core/domain.js';
+import { AS_OF, DEALS, METRICS } from './core/domain.js';
 import { canShape, redact } from './core/policy.js';
 import { guard } from './pipeline/guard.js';
 import { createHarness } from './pipeline/harness.js';
@@ -51,6 +51,8 @@ export function createEngine({ interpret = defaultInterpreter, harness: harnessO
         user,
         shape: visibleShape(user, registry.effectiveShape(user)),
         deals: redact(user, DEALS),
+        asOf: AS_OF,
+        metrics: Object.fromEntries(Object.entries(METRICS).map(([id, m]) => [id, m.label])),
         history: registry.history(user),
         canShapeOrg: canShape(user, 'org'),
       };

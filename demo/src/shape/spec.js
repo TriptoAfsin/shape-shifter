@@ -1,13 +1,14 @@
 // The shape layer: a declarative description of how the app looks and flows.
 // It is data, never code, so it can be validated, diffed, versioned and rolled back.
 
-import { DEAL_FIELDS, STAGES, deepFreeze } from '../core/domain.js';
+import { DEAL_FIELDS, METRICS, STAGES, deepFreeze } from '../core/domain.js';
 import { canReadField } from '../core/policy.js';
 
 export const LAYOUTS = deepFreeze(['kanban', 'table']);
-export const CHART_TYPES = deepFreeze(['bar', 'donut']);
+export const CHART_TYPES = deepFreeze(['bar', 'donut', 'line']);
 export const AGGREGATES = deepFreeze(['sum', 'avg', 'count']);
 const MAX_CHARTS = 4;
+const MAX_KPIS = 6;
 
 export const BASE_SHAPE = deepFreeze({
   views: {
@@ -16,9 +17,14 @@ export const BASE_SHAPE = deepFreeze({
       layout: 'kanban',
       groupBy: 'stage',
       columns: ['name', 'company', 'value', 'owner'],
-      filter: null,
+      filters: [],
       sort: { field: 'value', dir: 'desc' },
-      charts: [{ id: 'sum-value-by-stage', type: 'bar', groupBy: 'stage', measure: { agg: 'sum', field: 'value' } }],
+      kpis: ['pipeline', 'open', 'avg', 'win'],
+      charts: [
+        { id: 'sum-value-by-stage', type: 'bar', groupBy: 'stage', measure: { agg: 'sum', field: 'value' } },
+        { id: 'count-deals-by-region', type: 'donut', groupBy: 'region', measure: { agg: 'count' } },
+        { id: 'sum-value-by-closeDate', type: 'line', groupBy: 'closeDate', measure: { agg: 'sum', field: 'value' } },
+      ],
     },
   },
   workflow: {
@@ -38,7 +44,17 @@ export function validateShape(shape) {
     }
     if (new Set(view.columns).size !== view.columns?.length) errors.push(`${at}.columns has duplicates`);
     if (view.groupBy && DEAL_FIELDS[view.groupBy]?.type !== 'enum') errors.push(`${at}.groupBy must be an enum field`);
-    if (view.filter && !DEAL_FIELDS[view.filter.field]) errors.push(`${at}.filter: unknown field "${view.filter.field}"`);
+    for (const f of view.filters ?? []) {
+      if (!DEAL_FIELDS[f.field]) errors.push(`${at}.filters: unknown field "${f.field}"`);
+      if (('eq' in f) === ('in' in f)) errors.push(`${at}.filters: use exactly one of eq or in`);
+      if ('in' in f && (!Array.isArray(f.in) || f.in.length === 0)) errors.push(`${at}.filters: "in" must list values`);
+      if (f.field === 'stage' && [].concat(f.in ?? f.eq).some((v) => !STAGES.includes(v))) errors.push(`${at}.filters: unknown stage`);
+    }
+    if (new Set((view.filters ?? []).map((f) => f.field)).size !== (view.filters ?? []).length) errors.push(`${at}.filters: one filter per field`);
+    const kpis = view.kpis ?? [];
+    if (kpis.length > MAX_KPIS) errors.push(`${at}.kpis can hold at most ${MAX_KPIS} cards`);
+    if (new Set(kpis).size !== kpis.length) errors.push(`${at}.kpis has duplicates`);
+    for (const k of kpis) if (!METRICS[k]) errors.push(`${at}.kpis: unknown metric "${k}"`);
     if (view.sort && !DEAL_FIELDS[view.sort.field]) errors.push(`${at}.sort: unknown field "${view.sort.field}"`);
     if (view.sort && !['asc', 'desc'].includes(view.sort.dir)) errors.push(`${at}.sort.dir must be asc or desc`);
     errors.push(...validateCharts(view.charts ?? [], `${at}.charts`));
@@ -56,7 +72,11 @@ function validateCharts(charts, at) {
   for (const chart of charts) {
     if (!CHART_TYPES.includes(chart.type)) errors.push(`${at}: type must be one of ${CHART_TYPES.join(', ')}`);
     const group = DEAL_FIELDS[chart.groupBy];
-    if (!group || !['string', 'enum'].includes(group.type)) errors.push(`${at}: can only group by a text or stage field, not "${chart.groupBy}"`);
+    if (chart.type === 'line') {
+      if (group?.type !== 'date') errors.push(`${at}: a line chart needs a date to run along, not "${chart.groupBy}"`);
+    } else if (!group || !['string', 'enum'].includes(group.type)) {
+      errors.push(`${at}: can only group by a text or stage field, not "${chart.groupBy}"`);
+    }
     const { agg, field } = chart.measure ?? {};
     if (!AGGREGATES.includes(agg)) errors.push(`${at}: measure must be one of ${AGGREGATES.join(', ')}`);
     if (agg !== 'count' && DEAL_FIELDS[field]?.type !== 'number') errors.push(`${at}: can only ${agg} a number field, not "${field}"`);
@@ -68,9 +88,10 @@ export function fieldsUsed(shape) {
   const fields = new Set();
   for (const view of Object.values(shape.views ?? {})) {
     (view.columns ?? []).forEach((f) => fields.add(f));
-    if (view.filter) fields.add(view.filter.field);
+    (view.filters ?? []).forEach((f) => fields.add(f.field));
     if (view.sort) fields.add(view.sort.field);
     if (view.groupBy) fields.add(view.groupBy);
+    for (const k of view.kpis ?? []) (METRICS[k]?.fields ?? []).forEach((f) => fields.add(f));
     for (const chart of view.charts ?? []) {
       fields.add(chart.groupBy);
       if (chart.measure?.field) fields.add(chart.measure.field);
@@ -85,7 +106,8 @@ export function visibleShape(user, shape) {
   for (const view of Object.values(next.views)) {
     view.columns = view.columns.filter((f) => canReadField(user, f));
     if (view.sort && !canReadField(user, view.sort.field)) view.sort = null;
-    if (view.filter && !canReadField(user, view.filter.field)) view.filter = null;
+    view.filters = (view.filters ?? []).filter((f) => canReadField(user, f.field));
+    view.kpis = (view.kpis ?? []).filter((k) => (METRICS[k]?.fields ?? []).every((f) => canReadField(user, f)));
     view.charts = (view.charts ?? []).filter(
       (c) => canReadField(user, c.groupBy) && (!c.measure.field || canReadField(user, c.measure.field)),
     );

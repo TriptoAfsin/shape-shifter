@@ -10,9 +10,23 @@ export const DEAL_FIELDS = deepFreeze({
   region: { type: 'string', label: 'Region' },
   stage: { type: 'enum', label: 'Stage', values: STAGES },
   value: { type: 'number', label: 'Value', aliases: ['amount', 'size', 'revenue'] },
-  closeDate: { type: 'date', label: 'Close date', aliases: ['close', 'closing date', 'due date'] },
+  closeDate: { type: 'date', label: 'Close date', aliases: ['close month', 'close', 'closing date', 'due date', 'month', 'monthly'] },
   // Sensitive: only admins may read it, whatever the shape says.
   margin: { type: 'number', label: 'Margin', readRoles: ['admin'] },
+});
+
+// The date the demo data is anchored to, so "closing in 30 days" stays meaningful.
+export const AS_OF = '2026-10-10';
+
+// Named metrics for KPI cards. Shapes pick from these; they can't define new math.
+export const METRICS = deepFreeze({
+  pipeline: { label: 'Open pipeline', fields: ['value', 'stage'], aliases: ['pipeline', 'open pipeline', 'pipeline value'] },
+  open: { label: 'Open deals', fields: ['stage'], aliases: ['open deals', 'deal count', 'number of deals'] },
+  avg: { label: 'Average deal', fields: ['value', 'stage'], aliases: ['average deal', 'avg deal', 'deal size'] },
+  win: { label: 'Win rate', fields: ['stage'], aliases: ['win rate', 'conversion'] },
+  won: { label: 'Won value', fields: ['value', 'stage'], aliases: ['won value', 'won revenue', 'closed won', 'bookings'] },
+  closing30: { label: 'Closing in 30 days', fields: ['closeDate', 'stage'], aliases: ['closing soon', 'closing in 30 days', 'closing'] },
+  margin: { label: 'Average margin', fields: ['margin'], aliases: ['average margin', 'avg margin', 'margin'] },
 });
 
 export const DEALS = deepFreeze([

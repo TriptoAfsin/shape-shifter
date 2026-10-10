@@ -14,12 +14,12 @@ const CHECKS = [
 const CHECK_OF = { scope: 'scope', reshapeable: 'surface', patch: 'surface', schema: 'schema', permissions: 'permissions' };
 
 const MISSIONS = [
-  { id: 'reshape', title: 'Reshape your own view', hint: 'Make a personal change and apply it.', try: 'Show only my region and chart value by company' },
-  { id: 'chart', title: 'Change a chart', hint: 'Charts are part of the shape too.', try: 'Make it a donut' },
+  { id: 'reshape', title: 'Reshape your own view', hint: 'One request, many parts: data, charts, KPIs.', try: 'Set me up for my territory' },
+  { id: 'chart', title: 'Change a chart', hint: 'Charts are part of the shape too.', try: 'Make it a bar chart' },
   { id: 'clarify', title: 'Get asked, not guessed', hint: 'Leave out a detail on purpose.', try: 'Add an approval step' },
   { id: 'blocked', title: 'Hit the core', hint: 'Ask for something no shape may do.', try: 'Skip the compliance check for everyone' },
   { id: 'isolated', title: 'See it stay personal', hint: "Switch user. Your change isn't theirs.", action: 'Switch to Cy' },
-  { id: 'undo', title: 'Undo a change', hint: 'Every change is a version.', action: 'Undo last' },
+  { id: 'undo', title: 'Undo a change', hint: 'Every change is a version. Find them in History.', action: 'Open history' },
 ];
 
 // Ready-made stories, so nobody needs an AI key (or a blank-page idea) to try it.
@@ -28,29 +28,29 @@ const SCENARIOS = [
     id: 'rep',
     title: 'A sales rep makes it theirs',
     user: 'ana',
-    note: 'Ana sells in EMEA. She reshapes her own view; nobody else is affected.',
-    prompts: ['Show only my region and chart value by company', 'Switch to a table and sort by close date, ascending', 'Make it a donut'],
+    note: 'Ana sells in EMEA. One request narrows the data, swaps a chart and changes the KPIs, for her only.',
+    prompts: ['Set me up for my territory', 'Turn this into a forecast view', 'Add a KPI for won value'],
   },
   {
     id: 'manager',
     title: 'A manager adds a process step',
     user: 'ben',
     note: 'Ben wants approvals before deals close. Leave out the stage and the brain asks.',
-    prompts: ['Add an approval step', 'Add manager approval before won', 'Chart deals by owner and make it a donut'],
+    prompts: ['Add an approval step', 'Focus on late-stage deals', 'Chart deals by owner and make it a donut'],
   },
   {
     id: 'admin',
     title: 'An admin changes it for everyone',
     user: 'cy',
-    note: 'Cy can change the org shape. Reps still never see restricted fields.',
-    prompts: ['Chart average margin by region for everyone', 'Make the pipeline a table for everyone', 'Show the margin column for everyone'],
+    note: "Cy reshapes the org default. Reps get it too, minus anything they aren't allowed to read.",
+    prompts: ['Executive summary for everyone', 'Add an average margin KPI for everyone', 'Make the pipeline a kanban board for everyone'],
   },
   {
     id: 'breaker',
     title: 'Someone pushes past the guardrails',
     user: 'ana',
     note: 'Ask for things no shape may do. The guard blocks them and explains why.',
-    prompts: ['Show the margin column', 'Skip the compliance check for everyone', 'Make the pipeline a table for everyone'],
+    prompts: ['Add an average margin KPI', 'Skip the compliance check for everyone', 'Chart average margin by owner'],
   },
 ];
 
@@ -96,9 +96,9 @@ const format = (field, value) => {
 
 function rows(view, deals, me) {
   let out = deals;
-  if (view.filter) {
-    const target = view.filter.eq === '$me.region' ? me.region : view.filter.eq;
-    out = out.filter((d) => d[view.filter.field] === target);
+  for (const f of view.filters ?? []) {
+    const target = f.eq === '$me.region' ? me.region : f.eq;
+    out = out.filter((d) => ('in' in f ? f.in.includes(d[f.field]) : d[f.field] === target));
   }
   if (view.sort) {
     const { field, dir } = view.sort;
@@ -109,8 +109,9 @@ function rows(view, deals, me) {
 
 function aggregate(list, { groupBy, measure }) {
   const groups = new Map();
+  const monthly = groupBy === 'closeDate';
   for (const d of list) {
-    const key = d[groupBy];
+    const key = monthly ? d.closeDate.slice(0, 7) : d[groupBy];
     const g = groups.get(key) ?? { key, sum: 0, n: 0 };
     g.n += 1;
     if (measure.field) g.sum += d[measure.field] ?? 0;
@@ -118,14 +119,17 @@ function aggregate(list, { groupBy, measure }) {
   }
   const value = (g) => (measure.agg === 'count' ? g.n : measure.agg === 'avg' ? g.sum / g.n : g.sum);
   let out = [...groups.values()].map((g) => ({ key: g.key, value: value(g) }));
-  out = groupBy === 'stage' ? out.sort((a, b) => STAGES.indexOf(a.key) - STAGES.indexOf(b.key)) : out.sort((a, b) => b.value - a.value);
+  if (monthly) out.sort((a, b) => a.key.localeCompare(b.key));
+  else if (groupBy === 'stage') out.sort((a, b) => STAGES.indexOf(a.key) - STAGES.indexOf(b.key));
+  else out.sort((a, b) => b.value - a.value);
   return out;
 }
 
 const measureFormat = (measure, v) =>
   measure.agg === 'count' ? String(v) : measure.field === 'margin' ? `${Math.round(v * 100)}%` : compact.format(v);
 const chartTitle = ({ groupBy, measure }) =>
-  `${measure.agg === 'count' ? 'Deals' : `${measure.agg === 'avg' ? 'Average' : 'Total'} ${LABELS[measure.field].toLowerCase()}`} by ${LABELS[groupBy].toLowerCase()}`;
+  `${measure.agg === 'count' ? 'Deals' : `${measure.agg === 'avg' ? 'Average' : 'Total'} ${LABELS[measure.field].toLowerCase()}`} by ${groupBy === 'closeDate' ? 'close month' : LABELS[groupBy].toLowerCase()}`;
+const monthLabel = (key) => new Date(`${key}-15`).toLocaleDateString('en-US', { month: 'short' });
 
 /* ---------- canvas ---------- */
 
@@ -142,20 +146,31 @@ function renderFlow(shape) {
     .join('');
 }
 
-function renderKpis(list) {
-  const open = list.filter((d) => d.stage !== 'won' && d.stage !== 'lost');
-  const won = list.filter((d) => d.stage === 'won').length;
-  const closed = list.filter((d) => d.stage === 'won' || d.stage === 'lost').length;
-  const kpis = [
-    ['pipeline', 'Open pipeline', open.reduce((s, d) => s + d.value, 0), (v) => compact.format(v)],
-    ['open', 'Open deals', open.length, (v) => String(Math.round(v))],
-    ['avg', 'Average deal', open.length ? open.reduce((s, d) => s + d.value, 0) / open.length : 0, (v) => compact.format(v)],
-    ['win', 'Win rate', closed ? (won / closed) * 100 : 0, (v) => `${Math.round(v)}%`],
-  ];
+// KPI math lives with the renderer; which KPIs appear is decided by the shape.
+const KPI_MATH = {
+  pipeline: (l) => [open(l).reduce((s, d) => s + d.value, 0), (v) => compact.format(v)],
+  open: (l) => [open(l).length, (v) => String(Math.round(v))],
+  avg: (l) => [open(l).length ? open(l).reduce((s, d) => s + d.value, 0) / open(l).length : 0, (v) => compact.format(v)],
+  win: (l) => {
+    const closed = l.filter((d) => d.stage === 'won' || d.stage === 'lost').length;
+    return [closed ? (l.filter((d) => d.stage === 'won').length / closed) * 100 : 0, (v) => `${Math.round(v)}%`];
+  },
+  won: (l) => [l.filter((d) => d.stage === 'won').reduce((s, d) => s + d.value, 0), (v) => compact.format(v)],
+  closing30: (l) => {
+    const asOf = new Date(state.view.asOf), soon = new Date(asOf.getTime() + 30 * 864e5);
+    return [open(l).filter((d) => new Date(d.closeDate) >= asOf && new Date(d.closeDate) <= soon).length, (v) => String(Math.round(v))];
+  },
+  margin: (l) => [l.length ? (l.reduce((s, d) => s + (d.margin ?? 0), 0) / l.length) * 100 : 0, (v) => `${Math.round(v)}%`],
+};
+const open = (l) => l.filter((d) => d.stage !== 'won' && d.stage !== 'lost');
+
+function renderKpis(view, list) {
+  const kpis = (view.kpis ?? []).filter((id) => KPI_MATH[id]).map((id) => [id, state.view.metrics[id], ...KPI_MATH[id](list)]);
+  $('kpis').style.setProperty('--n', Math.max(kpis.length, 1));
   $('kpis').innerHTML = kpis
-    .map(([id, label, , fmt]) => `<div class="kpi"><span>${label}</span><b data-kpi="${id}">${fmt(state.kpis[id] ?? 0)}</b></div>`)
+    .map(([id, label, , fmt]) => `<div class="kpi" style="view-transition-name: kpi-${id}"><span>${esc(label)}</span><b data-kpi="${id}">${fmt(state.kpis[id] ?? 0)}</b></div>`)
     .join('');
-  for (const [id, , target, fmt] of kpis) tick($(`kpis`).querySelector(`[data-kpi="${id}"]`), state.kpis[id] ?? 0, target, fmt);
+  for (const [id, , target, fmt] of kpis) tick($('kpis').querySelector(`[data-kpi="${id}"]`), state.kpis[id] ?? 0, target, fmt);
   kpis.forEach(([id, , v]) => (state.kpis[id] = v));
 }
 
@@ -207,6 +222,25 @@ function donutChart(chart, data) {
       .join('')}</ul></div>`;
 }
 
+function lineChart(chart, data) {
+  const W = 300, H = 120, pad = 14;
+  const max = Math.max(...data.map((d) => d.value), 1);
+  const x = (i) => (data.length === 1 ? W / 2 : pad + (i * (W - pad * 2)) / (data.length - 1));
+  const y = (v) => H - pad - (v / max) * (H - pad * 2);
+  const pts = data.map((d, i) => `${x(i).toFixed(1)},${y(d.value).toFixed(1)}`);
+  const area = `M${x(0)},${H - pad} L${pts.join(' L')} L${x(data.length - 1)},${H - pad} Z`;
+  return `<div class="line">
+    <svg viewBox="0 0 ${W} ${H + 18}" aria-hidden="true">
+      <line class="axis" x1="${pad}" x2="${W - pad}" y1="${H - pad}" y2="${H - pad}"></line>
+      <path class="area" d="${area}"></path>
+      <polyline class="stroke" points="${pts.join(' ')}" pathLength="1"></polyline>
+      ${data.map((d, i) => `<circle cx="${x(i)}" cy="${y(d.value)}" r="3.5" style="--i:${i}"></circle>`).join('')}
+      ${data.map((d, i) => `<text x="${x(i)}" y="${H + 12}" text-anchor="middle">${monthLabel(d.key)}</text>`).join('')}
+    </svg>
+    <p class="line-note">Peak ${monthLabel(data.reduce((a, b) => (b.value > a.value ? b : a)).key)}: <b>${measureFormat(chart.measure, max)}</b></p>
+  </div>`;
+}
+
 function renderCharts(view, list) {
   if (!view.charts.length) {
     $('charts').innerHTML = `<p class="empty">No charts in this shape. Try <button type="button" class="link" data-try="Chart value by region">“chart value by region”</button>.</p>`;
@@ -215,7 +249,8 @@ function renderCharts(view, list) {
   $('charts').innerHTML = view.charts
     .map((chart) => {
       const data = aggregate(list, chart);
-      const body = data.length === 0 ? '<p class="empty">Nothing to chart in this view.</p>' : chart.type === 'donut' ? donutChart(chart, data) : barChart(chart, data);
+      const draw = { donut: donutChart, line: lineChart, bar: barChart }[chart.type] ?? barChart;
+      const body = data.length === 0 ? '<p class="empty">Nothing to chart in this view.</p>' : draw(chart, data);
       return `<figure class="chart chart-${chart.type}" style="view-transition-name: chart-${esc(chart.id)}">
         <figcaption>${chartTitle(chart)}</figcaption>${body}</figure>`;
     })
@@ -228,12 +263,14 @@ function renderView() {
   const list = rows(view, deals, user);
 
   $('view-title').textContent = view.title;
-  const chip = $('scope-chip');
-  chip.hidden = !view.filter;
-  chip.textContent = view.filter ? `${user.region} only` : '';
+  const chips = (view.filters ?? []).map((f) =>
+    f.eq === '$me.region' ? `${user.region} only` : 'in' in f ? (f.in.length === 4 && f.field === 'stage' ? 'Open deals' : f.in.join(' + ')) : String(f.eq),
+  );
+  $('scope-chip').hidden = chips.length === 0;
+  $('scope-chip').textContent = chips.join(' · ');
 
   renderFlow(shape);
-  renderKpis(list);
+  renderKpis(view, list);
   renderCharts(view, list);
 
   const cell = (d, c) => `<span class="cell ${c === 'value' || c === 'margin' ? 'num' : ''}" data-label="${LABELS[c]}">${esc(format(c, d[c]))}</span>`;
@@ -259,6 +296,9 @@ function renderView() {
 
 function renderHistory() {
   const { history, canShapeOrg } = state.view;
+  const count = history.personal.length + history.org.length - 1;
+  $('history-count').textContent = count;
+  $('history-count').hidden = count === 0;
   const entry = (h, by = '') =>
     `<li class="${h.stale ? 'is-stale' : ''}"><span class="ver">v${h.version}</span><span class="what">${esc(h.intent)}${h.stale ? '<em>stale, skipped</em>' : ''}${by}</span></li>`;
   $('history').innerHTML = `
@@ -414,6 +454,24 @@ function switchUser(id) {
   refresh();
 }
 
+/* ---------- history drawer ---------- */
+
+function openHistory() {
+  const d = $('history-drawer');
+  if (!d.open) d.showModal();
+  $('history-open').setAttribute('aria-expanded', 'true');
+}
+function closeHistory() {
+  $('history-drawer').close();
+  $('history-open').setAttribute('aria-expanded', 'false');
+}
+$('history-open').onclick = openHistory;
+$('history-close').onclick = closeHistory;
+$('history-drawer').addEventListener('click', (e) => {
+  if (e.target === $('history-drawer')) closeHistory(); // backdrop
+});
+$('history-drawer').addEventListener('close', () => $('history-open').setAttribute('aria-expanded', 'false'));
+
 /* ---------- events ---------- */
 
 $('intent-form').onsubmit = (e) => {
@@ -435,8 +493,7 @@ document.addEventListener('click', async (e) => {
   const action = e.target.closest('[data-action]')?.dataset.action;
   if (action === 'isolated') return switchUser(state.user === 'cy' ? 'ana' : 'cy');
   if (action === 'undo') {
-    const first = document.querySelector('[data-rollback]:not([disabled])');
-    if (first) first.click();
+    openHistory();
     return;
   }
   const scope = e.target.closest('[data-rollback]')?.dataset.rollback;

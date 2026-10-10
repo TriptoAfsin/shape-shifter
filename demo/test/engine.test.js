@@ -23,8 +23,8 @@ test('reshapes a personal view from intent', async () => {
 test('personal changes do not leak to other users', async () => {
   const engine = createEngine();
   await shift(engine, ana, 'show only my region');
-  assert.deepEqual(engine.view(ana).shape.views.pipeline.filter, { field: 'region', eq: '$me.region' });
-  assert.equal(engine.view(cy).shape.views.pipeline.filter, null);
+  assert.deepEqual(engine.view(ana).shape.views.pipeline.filters, [{ field: 'region', eq: '$me.region' }]);
+  assert.deepEqual(engine.view(cy).shape.views.pipeline.filters, []);
 });
 
 test('asks instead of guessing when intent is ambiguous', async () => {
@@ -120,8 +120,10 @@ test('charts cannot group by a number field', async () => {
 
 test('removes a chart and asks when there is nothing to chart', async () => {
   const engine = createEngine();
-  await shift(engine, ana, 'remove the chart');
-  assert.deepEqual(engine.view(ana).shape.views.pipeline.charts, []);
+  await shift(engine, ana, 'remove the trend chart');
+  const charts = engine.view(ana).shape.views.pipeline.charts;
+  assert.equal(charts.length, 2);
+  assert.ok(charts.every((c) => c.type !== 'line'));
   assert.equal((await engine.propose(ana, 'add a chart')).kind, 'clarify');
 });
 
@@ -161,4 +163,46 @@ test('harness hooks can stop a run before the brain sees it', async () => {
   const result = await engine.propose(ana, 'show only my region');
   assert.equal(result.question, 'Reshaping is paused for maintenance.');
   assert.equal(brainCalled, false);
+});
+
+test('one request reshapes filters, charts, KPIs and sort together', async () => {
+  const engine = createEngine();
+  const result = await shift(engine, ana, 'Set me up for my territory');
+  assert.equal(result.kind, 'preview');
+  assert.ok(result.summary.length >= 3);
+  const view = engine.view(ana).shape.views.pipeline;
+  assert.deepEqual(view.filters, [{ field: 'region', eq: '$me.region' }]);
+  assert.deepEqual(view.kpis, ['pipeline', 'won', 'closing30', 'win']);
+  assert.ok(view.charts.some((c) => c.groupBy === 'company'));
+  assert.ok(!view.charts.some((c) => c.groupBy === 'region'));
+});
+
+test('filters stack: territory then forecast keeps both', async () => {
+  const engine = createEngine();
+  await shift(engine, ana, 'Set me up for my territory');
+  await shift(engine, ana, 'Turn this into a forecast view');
+  const view = engine.view(ana).shape.views.pipeline;
+  assert.deepEqual(view.filters.map((f) => f.field), ['region', 'stage']);
+  assert.equal(view.layout, 'table');
+  assert.deepEqual(view.sort, { field: 'closeDate', dir: 'asc' });
+});
+
+test('the brain tailors a playbook to the role; the guard still guards KPIs', async () => {
+  const engine = createEngine();
+  const forRep = await engine.propose(ana, 'Executive summary');
+  assert.equal(forRep.kind, 'preview');
+  assert.ok(!JSON.stringify(forRep.ops).includes('margin'));
+  const forAdmin = await engine.propose(cy, 'Executive summary for everyone');
+  assert.ok(JSON.stringify(forAdmin.ops).includes('margin'));
+
+  const sneaky = await engine.propose(ana, 'Add an average margin KPI');
+  assert.equal(sneaky.kind, 'rejected');
+  assert.ok(sneaky.violations.some((v) => v.rule === 'permissions'));
+});
+
+test('a line chart needs a date to run along', async () => {
+  const engine = createEngine();
+  const result = await engine.propose(ana, 'chart value by region and make it a line');
+  assert.equal(result.kind, 'clarify');
+  assert.equal((await engine.propose(ana, 'add a KPI for won value')).kind, 'preview');
 });

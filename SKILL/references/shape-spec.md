@@ -21,8 +21,13 @@ A shape is declarative data that references core vocabulary by id. Example (CRM 
       "layout": "kanban",
       "groupBy": "stage",
       "columns": ["name", "company", "value", "owner"],
-      "filter": { "field": "region", "eq": "$me.region" },
-      "sort": { "field": "value", "dir": "desc" }
+      "filters": [{ "field": "region", "eq": "$me.region" }],
+      "sort": { "field": "value", "dir": "desc" },
+      "kpis": ["pipeline", "won", "closing30", "win"],
+      "charts": [
+        { "id": "sum-value-by-company", "type": "donut", "groupBy": "company", "measure": { "agg": "sum", "field": "value" } },
+        { "id": "sum-value-by-closeDate", "type": "line", "groupBy": "closeDate", "measure": { "agg": "sum", "field": "value" } }
+      ]
     }
   },
   "workflow": {
@@ -41,6 +46,8 @@ Rules:
 - Use symbolic tokens for viewer context (`$me.region`, `$me.team`) and resolve them server-side.
 - Use enums for layouts, operators and directions. Avoid free-form strings that a renderer would interpret.
 - Automations reference **named core capabilities** (`notify(role)`, `assign(queue)`), never URLs, scripts or queries.
+- KPIs reference **named core metrics**, and charts use a fixed set of types and aggregates (`sum`, `avg`, `count`). Shapes choose; the core defines the math.
+- Filters are a list (ANDed, one per field) so independent requests compose instead of overwriting each other.
 
 ## 2. Shape patch
 

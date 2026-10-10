@@ -16,6 +16,11 @@
       <span class="wordmark">Shapeshift <b>CRM</b></span>
       <span class="brand-note">a working demo of shapeshifting software</span>
     </div>
+    <div class="top-actions">
+    <button type="button" class="btn btn-quiet history-btn" id="history-open" aria-haspopup="dialog" aria-expanded="false" aria-controls="history-drawer">
+      <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 12a9 9 0 1 0 3-6.7L3 8"/><path d="M3 3v5h5"/><path d="M12 7v5l3 2"/></svg>
+      Shape history <span class="count" id="history-count" hidden>0</span>
+    </button>
     <div class="who" role="group" aria-label="Signed in as">
       <span class="who-label">Signed in as</span>
       <div class="seg" id="users">
@@ -24,6 +29,7 @@
         <button type="button" data-user="ben" aria-pressed="false"><b>Ben</b><small>manager · NA</small></button>
         <button type="button" data-user="cy" aria-pressed="false"><b>Cy</b><small>admin · APAC</small></button>
       </div>
+    </div>
     </div>
   </header>
 
@@ -71,11 +77,6 @@
         <div class="meter" aria-hidden="true"><span id="meter"></span></div>
         <ol class="missions" id="missions"></ol>
       </section>
-
-      <section class="history" aria-labelledby="history-title">
-        <h2 id="history-title">Shape history</h2>
-        <div id="history"></div>
-      </section>
     </aside>
 
     <section class="canvas reveal" style="--i: 2" aria-labelledby="view-title">
@@ -96,6 +97,15 @@
     <span>The brain proposes. The core decides.</span>
     <a href="https://github.com/TriptoAfsin/shape-shifter">github.com/TriptoAfsin/shape-shifter</a>
   </footer>
+
+  <dialog class="drawer" id="history-drawer" aria-labelledby="history-title">
+    <div class="drawer-head">
+      <h2 id="history-title">Shape history</h2>
+      <button type="button" class="btn btn-quiet" id="history-close" aria-label="Close history">Close</button>
+    </div>
+    <p class="drawer-note">Every reshape is a version. Personal versions replay on top of the organization's current shape.</p>
+    <div id="history" class="history"></div>
+  </dialog>
 
   <script type="module" src="app.js"></script>
 </body>

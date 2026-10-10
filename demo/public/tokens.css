@@ -39,6 +39,8 @@
   --color-series-5: oklch(89% 0.045 265);
   --color-series-6: oklch(40% 0.12 265);
 
+  --color-scrim: oklch(23% 0.026 265 / 0.28);
+
   --shadow-lift: 0 10px 24px -14px oklch(30% 0.08 265 / 0.35);
   --shadow-panel: 0 1px 0 oklch(89% 0.012 265), 0 18px 40px -28px oklch(30% 0.08 265 / 0.35);
 

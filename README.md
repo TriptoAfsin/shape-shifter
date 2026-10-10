@@ -68,16 +68,14 @@ npm test       # guardrail tests (node:test)
 
 Requires Node 20+. Pick one of four **scenarios** from the dropdown (a rep makes it theirs, a manager adds a process step, an admin changes it for everyone, someone pushes past the guardrails) and tap a ready-made request, or type your own. Six guided missions tick off as you go. Try:
 
-- *"Show only my region and chart value by company"*: a personal view, with a new chart that other users don't see
-- *"Make it a donut"*: restyle the chart you just added
-- *"Switch to a table and sort by close date, ascending"*
-- *"Add manager approval before won"*: a new workflow gate
-- *"Add an approval step"*: the system asks which stage
-- *"Show the margin column"*: blocked for reps, allowed for admins
+- *"Set me up for my territory"*: one request, many parts. It filters to your region, swaps the region donut (now a single slice) for value by company, changes the KPI cards and re-sorts. Only for you.
+- *"Turn this into a forecast view"*: hides won and lost deals, switches to a table by close date, keeps the monthly trend line, and swaps in open-work KPIs. Filters stack, so your region filter stays.
+- *"Add an approval step"*: the brain asks which stage, then you answer with one tap
+- *"Add an average margin KPI"*: blocked for reps (margin is restricted), allowed for admins
 - *"Skip the compliance check for everyone"*: blocked by a core invariant, even for admins
-- *"Chart average margin by region for everyone"*: an admin-only org chart that stays hidden from reps
+- *"Executive summary for everyone"*: an admin resets the org default (table, four KPIs, three charts). The brain only proposes the margin KPI to people who can read margin, and reps never see it.
 
-Every change morphs into place (View Transitions), the KPIs and charts recompute live, and the engine strip shows each request moving Brain → Clarify → Guard → Preview → Apply. Harness traces for the current user are at `GET /api/traces`.
+The page starts with four KPI cards and three charts (bar, donut, line), all part of the shape. Every change morphs into place (View Transitions), numbers and charts recompute live, and the engine strip shows each request moving Brain → Clarify → Guard → Preview → Apply. **Shape history** sits in the top bar and opens as a sidebar with every version and one-step undo. Harness traces for the current user are at `GET /api/traces`.
 
 ## Use the skill with your own app
 
