@@ -1,0 +1,72 @@
+:root {
+  --bg: #fafaf8;
+  --panel: #ffffff;
+  --ink: #1d1d1b;
+  --muted: #74746f;
+  --line: #e4e3de;
+  --accent: #2f5bea;
+  --ok: #1f7a4d;
+  --no: #b3261e;
+  --ask: #8a5a00;
+  font: 14px/1.45 ui-sans-serif, system-ui, -apple-system, 'Segoe UI', sans-serif;
+}
+* { box-sizing: border-box; }
+body { margin: 0; background: var(--bg); color: var(--ink); }
+button { font: inherit; cursor: pointer; border: 1px solid var(--accent); background: var(--accent); color: #fff; border-radius: 6px; padding: 6px 12px; }
+button.ghost, .chip, .history button { background: transparent; color: var(--ink); border-color: var(--line); }
+button:disabled { opacity: 0.4; cursor: default; }
+
+.bar { display: flex; justify-content: space-between; align-items: center; padding: 12px 20px; border-bottom: 1px solid var(--line); background: var(--panel); }
+.brand { font-weight: 600; }
+.mark { color: var(--accent); }
+.tag { font-size: 11px; font-weight: 500; color: var(--muted); border: 1px solid var(--line); border-radius: 4px; padding: 1px 6px; margin-left: 4px; }
+.who { color: var(--muted); }
+select { font: inherit; padding: 4px 6px; border: 1px solid var(--line); border-radius: 6px; background: var(--panel); }
+
+main { display: grid; grid-template-columns: 1fr 280px; grid-template-areas: 'shift shift' 'app history'; gap: 16px; padding: 16px 20px; max-width: 1400px; margin: 0 auto; }
+.shift { grid-area: shift; }
+.app { grid-area: app; min-width: 0; }
+.history { grid-area: history; }
+@media (max-width: 900px) { main { grid-template-columns: 1fr; grid-template-areas: 'shift' 'app' 'history'; } }
+
+form { display: flex; gap: 8px; }
+#intent { flex: 1; font: inherit; padding: 10px 12px; border: 1px solid var(--line); border-radius: 8px; background: var(--panel); }
+#intent:focus { outline: 2px solid var(--accent); outline-offset: -1px; }
+.chips { display: flex; flex-wrap: wrap; gap: 6px; margin: 10px 0; }
+.chip { font-size: 12px; padding: 3px 10px; border-radius: 999px; }
+
+.note { border: 1px solid var(--line); border-left: 3px solid; border-radius: 6px; padding: 10px 14px; background: var(--panel); }
+.note ul { margin: 6px 0; padding-left: 18px; }
+.note.ok { border-left-color: var(--ok); }
+.note.no { border-left-color: var(--no); }
+.note.ask { border-left-color: var(--ask); }
+.note pre { background: var(--bg); padding: 8px; border-radius: 4px; overflow: auto; font-size: 12px; }
+.actions { display: flex; gap: 8px; margin-top: 8px; }
+code { font-size: 12px; background: var(--bg); padding: 1px 5px; border-radius: 4px; }
+
+.app-head { display: flex; flex-wrap: wrap; align-items: baseline; justify-content: space-between; gap: 8px; margin-bottom: 10px; }
+h1 { font-size: 20px; margin: 0; }
+.flow { display: flex; flex-wrap: wrap; align-items: center; gap: 4px; font-size: 12px; }
+.stage { padding: 2px 8px; border: 1px solid var(--line); border-radius: 4px; background: var(--panel); }
+.gate { padding: 2px 8px; border: 1px dashed var(--accent); color: var(--accent); border-radius: 4px; margin-right: 4px; }
+.arrow { color: var(--muted); }
+
+.board { display: grid; grid-template-columns: repeat(6, minmax(140px, 1fr)); gap: 10px; overflow-x: auto; }
+.lane h3 { font-size: 12px; text-transform: uppercase; letter-spacing: 0.04em; color: var(--muted); margin: 0 0 8px; }
+.lane h3 span { font-weight: 400; }
+.card { background: var(--panel); border: 1px solid var(--line); border-radius: 8px; padding: 8px 10px; margin-bottom: 8px; font-size: 13px; }
+.card .lead { font-weight: 600; }
+.card small { color: var(--muted); }
+
+table { width: 100%; border-collapse: collapse; background: var(--panel); border: 1px solid var(--line); border-radius: 8px; overflow: hidden; }
+th, td { text-align: left; padding: 8px 10px; border-bottom: 1px solid var(--line); }
+th { font-size: 12px; color: var(--muted); font-weight: 500; }
+.pill { font-size: 12px; padding: 1px 8px; border-radius: 999px; background: var(--bg); border: 1px solid var(--line); }
+
+.history { background: var(--panel); border: 1px solid var(--line); border-radius: 8px; padding: 12px 14px; align-self: start; }
+.history h2 { font-size: 14px; margin: 0 0 6px; }
+.history h3 { font-size: 12px; color: var(--muted); display: flex; justify-content: space-between; align-items: center; margin: 12px 0 4px; }
+.history button { font-size: 11px; padding: 2px 8px; }
+.history ol { margin: 0; padding-left: 18px; font-size: 13px; }
+.muted { color: var(--muted); }
+.stale { color: var(--ask); font-size: 11px; }

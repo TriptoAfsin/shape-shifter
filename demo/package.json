@@ -1,0 +1,16 @@
+{
+  "name": "shapeshifting-crm-demo",
+  "version": "0.1.0",
+  "description": "A tiny CRM that reshapes itself from natural-language intent, inside fixed guardrails.",
+  "private": true,
+  "type": "module",
+  "author": "TriptoAfsin",
+  "license": "CC-BY-4.0",
+  "scripts": {
+    "start": "node src/server.js",
+    "test": "node --test"
+  },
+  "engines": {
+    "node": ">=20"
+  }
+}

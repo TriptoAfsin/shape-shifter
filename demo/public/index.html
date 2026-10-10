@@ -1,0 +1,47 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Shapeshifting CRM</title>
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+  <header class="bar">
+    <div class="brand"><span class="mark">◇</span> Shapeshifting CRM <span class="tag">demo</span></div>
+    <label class="who">Signed in as
+      <select id="user">
+        <option value="ana">Ana: rep, EMEA</option>
+        <option value="ben">Ben: manager, NA</option>
+        <option value="cy">Cy: admin, APAC</option>
+      </select>
+    </label>
+  </header>
+
+  <main>
+    <section class="shift">
+      <form id="intent-form">
+        <input id="intent" autocomplete="off" placeholder="Describe how this should work for you…" />
+        <button type="submit">Reshape</button>
+      </form>
+      <div class="chips" id="chips"></div>
+      <div id="proposal"></div>
+    </section>
+
+    <section class="app">
+      <div class="app-head">
+        <h1 id="title">Pipeline</h1>
+        <div class="flow" id="flow" title="Workflow: stages and gates"></div>
+      </div>
+      <div id="view"></div>
+    </section>
+
+    <aside class="history">
+      <h2>Shape history</h2>
+      <div id="history"></div>
+    </aside>
+  </main>
+
+  <script type="module" src="app.js"></script>
+</body>
+</html>

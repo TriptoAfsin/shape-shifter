@@ -1,0 +1,208 @@
+<!doctype html>
+<!--
+  Source for docs/assets/shapeshifting-architecture.png
+  Re-render (from repo root, Chrome installed):
+    chrome --headless=new --hide-scrollbars --window-size=1800,1120 --force-device-scale-factor=2 \
+      --virtual-time-budget=5000 --screenshot=docs/assets/shapeshifting-architecture.png docs/diagram/architecture.html
+-->
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<title>Shapeshifting Software: Architecture</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Kalam:wght@400;700&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400&display=swap" />
+<script src="https://unpkg.com/roughjs@4.6.6/bundled/rough.js"></script>
+<style>
+  :root { --paper: #fcfcfa; }
+  html, body { margin: 0; background: var(--paper); }
+  svg { display: block; }
+</style>
+</head>
+<body>
+<svg id="d" width="1800" height="1120" viewBox="0 0 1800 1120" xmlns="http://www.w3.org/2000/svg"></svg>
+<script>
+const svg = document.getElementById('d');
+const rc = rough.svg(svg);
+const NS = 'http://www.w3.org/2000/svg';
+
+const C = {
+  ink: '#1f2328', muted: '#6b6f76', line: '#c9c7c0',
+  intent: '#c27c0e', intentBg: '#fdf5e6',
+  adapt: '#2f5bea', adaptBg: '#eef2fe',
+  constraint: '#c0392b', constraintBg: '#fcefed',
+  persist: '#7048e8', persistBg: '#f3effe',
+};
+const HAND = 'Kalam, cursive', SANS = 'Inter, system-ui, sans-serif', MONO = 'JetBrains Mono, monospace';
+let seed = 3;
+
+function add(el) { svg.appendChild(el); return el; }
+function box(x, y, w, h, o = {}) {
+  return add(rc.rectangle(x, y, w, h, {
+    seed: seed++, roughness: 1.1, bowing: 0.8, strokeWidth: o.sw ?? 1.6,
+    stroke: o.stroke ?? C.ink, fill: o.fill, fillStyle: o.fillStyle ?? 'solid',
+    hachureGap: o.gap ?? 9, hachureAngle: -41, fillWeight: 0.6,
+    strokeLineDash: o.dash,
+  }));
+}
+function text(x, y, lines, o = {}) {
+  const t = document.createElementNS(NS, 'text');
+  t.setAttribute('x', x); t.setAttribute('y', y);
+  t.setAttribute('font-family', o.font ?? SANS);
+  t.setAttribute('font-size', o.size ?? 14);
+  t.setAttribute('font-weight', o.weight ?? 400);
+  t.setAttribute('fill', o.color ?? C.ink);
+  t.setAttribute('text-anchor', o.anchor ?? 'start');
+  if (o.spacing) t.setAttribute('letter-spacing', o.spacing);
+  [].concat(lines).forEach((line, i) => {
+    const s = document.createElementNS(NS, 'tspan');
+    s.setAttribute('x', x); s.setAttribute('dy', i === 0 ? 0 : (o.lh ?? (o.size ?? 14) * 1.4));
+    s.textContent = line; t.appendChild(s);
+  });
+  return add(t);
+}
+function arrow(points, o = {}) {
+  const color = o.color ?? C.ink;
+  const opts = { seed: seed++, roughness: 0.9, stroke: color, strokeWidth: o.sw ?? 1.6, strokeLineDash: o.dash };
+  add(points.length > 2 ? rc.curve(points, opts) : rc.line(...points[0], ...points[1], opts));
+  const [px, py] = points[points.length - 2], [ex, ey] = points[points.length - 1];
+  const a = Math.atan2(ey - py, ex - px), L = 13;
+  for (const s of [-1, 1]) add(rc.line(ex, ey, ex - L * Math.cos(a + s * 0.42), ey - L * Math.sin(a + s * 0.42), { ...opts, strokeLineDash: undefined }));
+  if (o.label) text(o.lx, o.ly, o.label, { font: HAND, size: o.lsize ?? 17, color, anchor: o.anchor ?? 'middle' });
+}
+function chip(x, y, w, h, title, lines, o = {}) {
+  box(x, y, w, h, { stroke: o.stroke ?? C.ink, fill: o.fill ?? '#fff', sw: 1.4 });
+  text(x + 14, y + 30, title, { font: HAND, size: o.tsize ?? 21, weight: 700, color: o.tcolor ?? C.ink });
+  text(x + 14, y + 55, lines, { size: 13, color: C.muted, lh: 18 });
+}
+
+/* ---------- title ---------- */
+text(60, 72, 'Shapeshifting Software', { font: HAND, size: 44, weight: 700 });
+text(60, 106, 'An existing app reshapes its interface, workflows and configurable behavior from natural-language intent, inside fixed security, data and business-rule constraints.', { size: 16, color: C.muted });
+
+/* ---------- person + intent ---------- */
+const px = 175, py = 205;
+add(rc.circle(px, py, 34, { seed: seed++, stroke: C.ink, strokeWidth: 1.6 }));
+add(rc.line(px, py + 17, px, py + 70, { seed: seed++, stroke: C.ink, strokeWidth: 1.6 }));
+add(rc.line(px - 26, py + 38, px + 26, py + 38, { seed: seed++, stroke: C.ink, strokeWidth: 1.6 }));
+add(rc.line(px, py + 70, px - 20, py + 104, { seed: seed++, stroke: C.ink, strokeWidth: 1.6 }));
+add(rc.line(px, py + 70, px + 20, py + 104, { seed: seed++, stroke: C.ink, strokeWidth: 1.6 }));
+text(px, py + 130, 'person using the app', { font: HAND, size: 17, color: C.muted, anchor: 'middle' });
+
+box(50, 352, 260, 120, { stroke: C.intent, fill: C.intentBg });
+text(66, 382, ['“Show only my region, and', 'add manager approval', 'before deals are Won.”'], { font: HAND, size: 19, color: C.ink, lh: 25 });
+text(66, 462, 'INTENT · plain language', { size: 11, weight: 600, color: C.intent, spacing: 1 });
+add(rc.line(170, 352, 170, 342, { seed: seed++, stroke: C.intent }));
+
+/* ---------- shape engine ---------- */
+box(350, 150, 1400, 335, { stroke: C.line, dash: [8, 7], sw: 1.3 });
+text(372, 180, 'SHAPE ENGINE · the managing loop around the app', { size: 12, weight: 600, color: C.muted, spacing: 1.2 });
+
+const stages = [
+  ['1  Interpret', ['LLM turns intent into a', 'shape patch: a small list', 'of ops on declarative', 'data. Never code.'], C.intent, C.intentBg],
+  ['2  Clarify', ['Ambiguous or risky?', 'Ask before acting.', '“Before which stage?”', ''], C.intent, C.intentBg],
+  ['3  Guard', ['scope & authority', 'reshapeable paths only', 'schema · permissions', 'core invariants'], C.constraint, C.constraintBg],
+  ['4  Preview', ['Render the result in a', 'sandbox. Show the diff', 'in plain words before', 'anything changes.'], C.adapt, C.adaptBg],
+  ['5  Apply', ['Commit as a new version:', 'personal overlay or', 'org-wide snapshot.', 'Re-guarded at commit.'], C.persist, C.persistBg],
+  ['6  Observe', ['Audit, telemetry and', 'one-step rollback.', 'Stale overlays are', 'skipped, not fatal.'], C.persist, C.persistBg],
+];
+const SX = 380, SW = 200, SG = 28, SY = 215, SH = 170;
+stages.forEach(([title, lines, stroke, fill], i) => {
+  const x = SX + i * (SW + SG);
+  box(x, SY, SW, SH, { stroke, fill, sw: 1.8 });
+  text(x + 14, SY + 34, title, { font: HAND, size: 23, weight: 700, color: stroke });
+  text(x + 14, SY + 64, lines, { size: 13, color: C.ink, lh: 19 });
+  if (i < stages.length - 1) arrow([[x + SW + 3, SY + SH / 2], [x + SW + SG - 3, SY + SH / 2]], { sw: 1.5 });
+});
+
+// intent -> interpret
+arrow([[310, 400], [345, 350], [SX - 4, SY + 110]], { color: C.intent });
+// clarify loops back to the person
+const clX = SX + (SW + SG) + SW / 2;
+arrow([[clX, SY + SH + 4], [clX - 60, 440], [560, 470], [315, 455]], { color: C.intent, dash: [6, 6], label: 'question back', lx: 470, ly: 452 });
+// guard rejects
+const gX = SX + 2 * (SW + SG);
+text(gX + 4, SY + SH + 26, '✕ blocked → explain the rule', { font: HAND, size: 16, color: C.constraint });
+
+/* ---------- shape layer ---------- */
+const LY = 520;
+box(350, LY, 1110, 200, { stroke: C.adapt, fill: C.adaptBg, sw: 1.6 });
+text(372, LY + 30, 'SHAPE LAYER · mutable · declarative data, versioned', { size: 12, weight: 600, color: C.adapt, spacing: 1.2 });
+const shapeCards = [
+  [375, 'Views & layout', ['pages, columns, kanban', 'or table, density']],
+  [595, 'Workflows', ['stages, approval gates,', 'routing, notifications']],
+  [1015, 'Data views', ['filters, sorts, groupings,', 'saved queries']],
+  [1235, 'Automations', ['rules & triggers built', 'from core capabilities']],
+];
+shapeCards.forEach(([x, t, l]) => chip(x, LY + 50, 200, 120, t, l, { stroke: C.adapt, tcolor: C.adapt }));
+
+/* ---------- registry ---------- */
+box(1490, LY, 260, 200, { stroke: C.persist, fill: C.persistBg, sw: 1.6 });
+text(1510, LY + 30, 'SHAPE REGISTRY', { size: 12, weight: 600, color: C.persist, spacing: 1.2 });
+[['v1', 1530], ['v2', 1605], ['v3', 1680]].forEach(([v, cx], i) => {
+  add(rc.circle(cx, LY + 85, 46, { seed: seed++, stroke: C.persist, fill: '#fff', fillStyle: 'solid', strokeWidth: 1.5 }));
+  text(cx, LY + 92, v, { font: HAND, size: 19, weight: 700, color: C.persist, anchor: 'middle' });
+  if (i < 2) arrow([[cx + 25, LY + 85], [cx + 50, LY + 85]], { color: C.persist, sw: 1.2 });
+});
+text(1510, LY + 140, ['org snapshots +', 'personal overlays, per user'], { size: 13, color: C.ink, lh: 19 });
+arrow([[1680, LY + 112], [1650, LY + 128], [1610, LY + 112]], { color: C.persist, sw: 1.2 });
+text(1700, LY + 135, 'undo', { font: HAND, size: 15, color: C.persist });
+
+// apply/observe -> registry
+const apX = SX + 4 * (SW + SG) + SW / 2, obX = SX + 5 * (SW + SG) + SW / 2;
+arrow([[apX, SY + SH + 4], [apX + 30, 470], [1560, LY - 4]], { color: C.persist, label: 'commit vN', lx: 1500, ly: 478, anchor: 'start' });
+arrow([[obX, SY + SH + 4], [obX - 10, LY - 4]], { color: C.persist, dash: [6, 6], label: 'rollback', lx: obX + 48, ly: 508 });
+// registry -> shape layer
+arrow([[1490, LY + 175], [1462, LY + 175]], { color: C.persist, sw: 1.4 });
+
+/* ---------- core ---------- */
+const CY = 760;
+box(350, CY, 1400, 205, { stroke: C.ink, fill: '#e7e5df', fillStyle: 'hachure', gap: 11, sw: 2 });
+box(368, CY + 14, 430, 26, { stroke: 'none', fill: 'var(--paper)', sw: 0 });
+text(376, CY + 33, 'CORE · immutable · the model can read it, never write it', { size: 12, weight: 600, color: C.ink, spacing: 1.2 });
+const coreCards = [
+  ['Domain model', ['entities, fields, records', 'and their meaning']],
+  ['Business invariants', ['“compliance before Won”,', 'money math, retention']],
+  ['AuthZ & redaction', ['who may see / change what;', 'enforced server-side']],
+  ['Audit trail', ['every change attributed,', 'timestamped, replayable']],
+  ['Security boundaries', ['no code exec, no secrets,', 'no new data egress']],
+];
+coreCards.forEach(([t, l], i) => chip(375 + i * 275, CY + 58, 255, 120, t, l, { stroke: C.constraint, tcolor: C.ink }));
+
+// guard checks the core (through the gap in the shape layer)
+const gcx = gX + SW / 2;
+arrow([[gcx, SY + SH + 40], [gcx, CY - 4]], { color: C.constraint, dash: [7, 6], label: ['checks every', 'patch against'], lx: gcx - 12, ly: 640, anchor: 'end', lsize: 16 });
+
+/* ---------- reshaped app (renderer) ---------- */
+box(50, 560, 260, 175, { stroke: C.adapt, fill: '#fff' });
+text(66, 586, 'RENDERED FROM THE SHAPE', { size: 11, weight: 600, color: C.adapt, spacing: 1 });
+box(66, 600, 228, 22, { stroke: C.line, fill: '#fafafa', sw: 1 });
+text(76, 616, 'Pipeline · EMEA', { size: 12, weight: 600 });
+[0, 1, 2, 3].forEach((i) => {
+  box(66 + i * 58, 632, 52, 70, { stroke: C.line, fill: '#fff', sw: 1 });
+  box(71 + i * 58, 640, 42, 14, { stroke: C.adapt, fill: C.adaptBg, sw: 0.8 });
+});
+box(108, 708, 58, 18, { stroke: C.adapt, dash: [4, 3], sw: 1 });
+text(113, 721, 'approval', { size: 10, color: C.adapt });
+arrow([[350, 640], [312, 645]], { color: C.adapt });
+arrow([[180, 560], [180, 476]], { color: C.adapt, dash: [5, 5] });
+
+/* ---------- pillars legend ---------- */
+text(60, 800, 'FOUR PILLARS', { size: 12, weight: 600, color: C.muted, spacing: 1.2 });
+[['Intent', 'what the person asks for', C.intent, C.intentBg],
+ ['Adaptation', 'UI, workflow, automation', C.adapt, C.adaptBg],
+ ['Constraint', 'core, guard, invariants', C.constraint, C.constraintBg],
+ ['Persistence', 'versions, scopes, rollback', C.persist, C.persistBg]].forEach(([t, d, s, f], i) => {
+  const y = 822 + i * 36;
+  box(60, y, 22, 22, { stroke: s, fill: f, sw: 1.5 });
+  text(94, y + 17, t, { font: HAND, size: 19, weight: 700, color: s });
+  text(194, y + 16, d, { size: 12, color: C.muted });
+});
+
+/* ---------- footer ---------- */
+add(rc.line(60, 1000, 1750, 1000, { seed: seed++, stroke: C.line, strokeWidth: 1 }));
+text(60, 1040, 'The model proposes. The core decides.', { font: HAND, size: 26, weight: 700 });
+text(60, 1072, 'MAPE-K reading:  Monitor = intent + telemetry  ·  Analyze = interpret + clarify  ·  Plan = shape patch  ·  Execute = guard → preview → apply  ·  Knowledge = shape registry + core', { size: 13, color: C.muted });
+text(1750, 1040, 'github.com/TriptoAfsin/shape-shifter', { font: MONO, size: 13, color: C.muted, anchor: 'end' });
+text(1750, 1064, 'concept & diagram · TriptoAfsin · CC BY 4.0', { size: 12, color: C.muted, anchor: 'end' });
+</script>
+</body>
+</html>

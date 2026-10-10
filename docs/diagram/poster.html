@@ -1,0 +1,137 @@
+<!doctype html>
+<!--
+  Source for docs/assets/shapeshifting-poster.png (1080x1350, rendered at 2x)
+  Re-render (from repo root, Chrome installed):
+    chrome --headless=new --hide-scrollbars --window-size=1080,1350 --force-device-scale-factor=2 \
+      --virtual-time-budget=5000 --screenshot=docs/assets/shapeshifting-poster.png docs/diagram/poster.html
+-->
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<title>Shapeshifting Software: Poster</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Kalam:wght@400;700&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400&display=swap" />
+<script src="https://unpkg.com/roughjs@4.6.6/bundled/rough.js"></script>
+<style>
+  html, body { margin: 0; background: #fcfcfa; }
+  svg { display: block; }
+</style>
+</head>
+<body>
+<svg id="d" width="1080" height="1350" viewBox="0 0 1080 1350" xmlns="http://www.w3.org/2000/svg"></svg>
+<script>
+const svg = document.getElementById('d');
+const rc = rough.svg(svg);
+const NS = 'http://www.w3.org/2000/svg';
+const C = {
+  ink: '#1f2328', muted: '#6b6f76', line: '#c9c7c0', paper: '#fcfcfa',
+  intent: '#c27c0e', intentBg: '#fdf5e6',
+  adapt: '#2f5bea', adaptBg: '#eef2fe',
+  constraint: '#c0392b', constraintBg: '#fcefed',
+  persist: '#7048e8', persistBg: '#f3effe',
+};
+const HAND = 'Kalam, cursive', SANS = 'Inter, system-ui, sans-serif', MONO = 'JetBrains Mono, monospace';
+let seed = 11;
+
+const add = (el) => (svg.appendChild(el), el);
+function box(x, y, w, h, o = {}) {
+  return add(rc.rectangle(x, y, w, h, {
+    seed: seed++, roughness: 1.1, bowing: 0.8, strokeWidth: o.sw ?? 1.7,
+    stroke: o.stroke ?? C.ink, fill: o.fill, fillStyle: o.fillStyle ?? 'solid',
+    hachureGap: o.gap ?? 10, hachureAngle: -41, fillWeight: 0.6, strokeLineDash: o.dash,
+  }));
+}
+function text(x, y, lines, o = {}) {
+  const t = document.createElementNS(NS, 'text');
+  const attrs = { x, y, 'font-family': o.font ?? SANS, 'font-size': o.size ?? 15, 'font-weight': o.weight ?? 400,
+    fill: o.color ?? C.ink, 'text-anchor': o.anchor ?? 'start', 'letter-spacing': o.spacing ?? 0 };
+  Object.entries(attrs).forEach(([k, v]) => t.setAttribute(k, v));
+  [].concat(lines).forEach((line, i) => {
+    const s = document.createElementNS(NS, 'tspan');
+    s.setAttribute('x', x); s.setAttribute('dy', i === 0 ? 0 : (o.lh ?? (o.size ?? 15) * 1.4));
+    s.textContent = line; t.appendChild(s);
+  });
+  return add(t);
+}
+function arrow(x1, y1, x2, y2, o = {}) {
+  const opts = { seed: seed++, roughness: 0.9, stroke: o.color ?? C.ink, strokeWidth: o.sw ?? 1.7, strokeLineDash: o.dash };
+  add(rc.line(x1, y1, x2, y2, opts));
+  const a = Math.atan2(y2 - y1, x2 - x1), L = 12;
+  for (const s of [-1, 1]) add(rc.line(x2, y2, x2 - L * Math.cos(a + s * 0.42), y2 - L * Math.sin(a + s * 0.42), { ...opts, strokeLineDash: undefined }));
+}
+function pill(x, y, w, h, label, stroke) {
+  box(x, y, w, h, { stroke, fill: '#fff', sw: 1.3 });
+  text(x + w / 2, y + h / 2 + 8, label, { font: HAND, size: 21, weight: 700, color: stroke, anchor: 'middle' });
+}
+
+/* ---------- header ---------- */
+text(60, 92, 'A CONCEPT BY TRIPTOAFSIN', { size: 14, weight: 600, color: C.muted, spacing: 2 });
+text(56, 172, 'Shapeshifting Software', { font: HAND, size: 78, weight: 700 });
+add(rc.line(62, 192, 862, 188, { seed: seed++, stroke: C.adapt, strokeWidth: 3, roughness: 1.6 }));
+text(60, 238, ['What if apps reshaped themselves around what you need,', 'from within, without breaking their core?'], { size: 23, color: C.muted, lh: 32 });
+
+/* ---------- intent ---------- */
+box(190, 300, 700, 92, { stroke: C.intent, fill: C.intentBg });
+text(540, 343, '“Show only my region and add manager', { font: HAND, size: 25, anchor: 'middle' });
+text(540, 373, 'approval before deals are Won.”', { font: HAND, size: 25, anchor: 'middle' });
+text(206, 322, 'YOU', { size: 11, weight: 600, color: C.intent, spacing: 1.5 });
+arrow(540, 396, 540, 448, { color: C.intent });
+
+/* ---------- engine ---------- */
+box(40, 455, 1000, 210, { stroke: C.line, dash: [8, 7], sw: 1.3 });
+text(60, 482, 'SHAPE ENGINE', { size: 12, weight: 600, color: C.muted, spacing: 1.5 });
+const steps = [
+  ['Interpret', ['LLM turns words', 'into a shape patch.', 'Data, never code.'], C.intent, C.intentBg],
+  ['Clarify', ['Not sure what', 'you meant? It asks', 'before it acts.'], C.intent, C.intentBg],
+  ['Guard', ['Scope, permissions,', 'schema, invariants.', 'Deterministic.'], C.constraint, C.constraintBg],
+  ['Preview', ['Sandbox render', 'and a plain-', 'language diff.'], C.adapt, C.adaptBg],
+  ['Apply', ['New version.', 'Scoped. One-step', 'rollback.'], C.persist, C.persistBg],
+];
+const SW = 172, SG = 25, SX = 60, SY = 498, SH = 150;
+steps.forEach(([title, lines, stroke, fill], i) => {
+  const x = SX + i * (SW + SG);
+  box(x, SY, SW, SH, { stroke, fill, sw: 1.8 });
+  text(x + 14, SY + 36, `${i + 1}  ${title}`, { font: HAND, size: 25, weight: 700, color: stroke });
+  text(x + 14, SY + 70, lines, { size: 15, lh: 21 });
+  if (i < steps.length - 1) arrow(x + SW + 2, SY + SH / 2, x + SW + SG - 2, SY + SH / 2, { sw: 1.4 });
+});
+arrow(540, 668, 540, 712, { color: C.persist });
+text(556, 698, 'commits a new version', { font: HAND, size: 18, color: C.persist });
+
+/* ---------- shape layer ---------- */
+box(40, 718, 1000, 128, { stroke: C.adapt, fill: C.adaptBg });
+text(60, 746, 'SHAPE LAYER · mutable · versioned data', { size: 12, weight: 600, color: C.adapt, spacing: 1.5 });
+['Views', 'Workflows', 'Data views', 'Automations'].forEach((t, i) => pill(60 + i * 178, 766, 162, 58, t, C.adapt));
+// registry versions
+[['v1', 800], ['v2', 870], ['v3', 940]].forEach(([v, cx], i) => {
+  add(rc.circle(cx, 795, 46, { seed: seed++, stroke: C.persist, fill: '#fff', fillStyle: 'solid', strokeWidth: 1.5 }));
+  text(cx, 802, v, { font: HAND, size: 19, weight: 700, color: C.persist, anchor: 'middle' });
+  if (i < 2) arrow(cx + 25, 795, cx + 45, 795, { color: C.persist, sw: 1.2 });
+});
+text(870, 838, 'personal · team · org', { size: 12, color: C.persist, anchor: 'middle' });
+
+/* ---------- core ---------- */
+box(40, 866, 1000, 140, { stroke: C.ink, fill: '#e7e5df', fillStyle: 'hachure', gap: 11, sw: 2 });
+box(54, 878, 470, 26, { stroke: 'none', fill: C.paper, sw: 0 });
+text(62, 897, 'CORE · immutable · the model reads it, never writes it', { size: 12, weight: 600, spacing: 1.5 });
+['Domain', 'Invariants', 'Permissions', 'Audit', 'Security'].forEach((t, i) => pill(60 + i * 194, 920, 178, 62, t, C.constraint));
+
+/* ---------- pillars ---------- */
+text(60, 1056, 'FOUR PILLARS', { size: 12, weight: 600, color: C.muted, spacing: 1.5 });
+[['Intent', 'ask in your', 'own words', C.intent, C.intentBg],
+ ['Adaptation', 'UI and workflows', 'reshape', C.adapt, C.adaptBg],
+ ['Constraint', 'rules and security', 'never bend', C.constraint, C.constraintBg],
+ ['Persistence', 'versioned, scoped,', 'reversible', C.persist, C.persistBg]].forEach(([t, a, b, s, f], i) => {
+  const x = 60 + i * 245;
+  box(x, 1072, 225, 104, { stroke: s, fill: f, sw: 1.6 });
+  text(x + 16, 1110, t, { font: HAND, size: 27, weight: 700, color: s });
+  text(x + 16, 1140, [a, b], { size: 15, lh: 20 });
+});
+
+/* ---------- footer ---------- */
+add(rc.line(60, 1206, 1020, 1206, { seed: seed++, stroke: C.line, strokeWidth: 1 }));
+text(60, 1262, 'The model proposes. The core decides.', { font: HAND, size: 40, weight: 700 });
+text(60, 1306, 'github.com/TriptoAfsin/shape-shifter', { font: MONO, size: 16, color: C.muted });
+text(1020, 1306, '#ShapeshiftingSoftware', { size: 16, weight: 600, color: C.adapt, anchor: 'end' });
+</script>
+</body>
+</html>
