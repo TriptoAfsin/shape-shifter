@@ -94,3 +94,71 @@ test('a stale personal patch is skipped, not fatal', async () => {
   assert.deepEqual(view.shape.views.pipeline.columns, ['owner']);
   assert.equal(view.history.personal[0].stale, true);
 });
+
+test('adds a chart from intent and restyles it in the same request', async () => {
+  const engine = createEngine();
+  const result = await shift(engine, ana, 'Chart value by region and make it a donut');
+  assert.equal(result.kind, 'preview');
+  const charts = engine.view(ana).shape.views.pipeline.charts;
+  assert.deepEqual(charts.at(-1), { id: 'sum-value-by-region', type: 'donut', groupBy: 'region', measure: { agg: 'sum', field: 'value' } });
+});
+
+test('a chart over a restricted field is blocked for reps, allowed for admins', async () => {
+  const engine = createEngine();
+  const asRep = await engine.propose(ana, 'chart average margin by owner');
+  assert.equal(asRep.kind, 'rejected');
+  assert.ok(asRep.violations.some((v) => v.rule === 'permissions'));
+  assert.equal((await engine.propose(cy, 'chart average margin by owner')).kind, 'preview');
+});
+
+test('charts cannot group by a number field', async () => {
+  const engine = createEngine();
+  const result = await engine.propose(ana, 'chart deals by value');
+  assert.equal(result.kind, 'rejected');
+  assert.ok(result.violations.some((v) => v.rule === 'schema'));
+});
+
+test('removes a chart and asks when there is nothing to chart', async () => {
+  const engine = createEngine();
+  await shift(engine, ana, 'remove the chart');
+  assert.deepEqual(engine.view(ana).shape.views.pipeline.charts, []);
+  assert.equal((await engine.propose(ana, 'add a chart')).kind, 'clarify');
+});
+
+test('harness retries malformed brain output, then succeeds', async () => {
+  let calls = 0;
+  const flaky = async () => (++calls === 1 ? { kind: 'proposal', scope: 'everyone', ops: [] } : { kind: 'clarify', question: 'Which view?' });
+  const engine = createEngine({ interpret: flaky });
+  const result = await engine.propose(ana, 'do the thing');
+  assert.equal(result.kind, 'clarify');
+  const [trace] = engine.traces(ana);
+  assert.equal(trace.attempts.length, 2);
+  assert.ok(trace.attempts[0].errors.length > 0);
+});
+
+test('harness degrades to a question when the brain keeps misbehaving', async () => {
+  const sneaky = async () => ({ kind: 'proposal', scope: 'personal', summary: ['x'], ops: [{ op: 'set', path: '/views/pipeline/title', value: 'javascript:alert(1)' }] });
+  const engine = createEngine({ interpret: sneaky });
+  const result = await engine.propose(ana, 'rename the page');
+  assert.equal(result.kind, 'clarify');
+  assert.equal(engine.traces(ana)[0].outcome, 'fallback');
+});
+
+test('harness enforces a time budget and an input budget', async () => {
+  const slow = () => new Promise((r) => setTimeout(() => r({ kind: 'clarify', question: 'late' }), 200));
+  const engine = createEngine({ interpret: slow, harness: { timeoutMs: 20, maxAttempts: 1 } });
+  assert.equal((await engine.propose(ana, 'anything')).question.includes('another way'), true);
+  assert.equal((await engine.propose(ana, 'x'.repeat(1000))).kind, 'clarify');
+  assert.equal(engine.traces(ana)[1].outcome, 'over-budget');
+});
+
+test('harness hooks can stop a run before the brain sees it', async () => {
+  let brainCalled = false;
+  const engine = createEngine({
+    interpret: async () => ((brainCalled = true), { kind: 'clarify', question: '?' }),
+    harness: { hooks: { before: () => 'Reshaping is paused for maintenance.' } },
+  });
+  const result = await engine.propose(ana, 'show only my region');
+  assert.equal(result.question, 'Reshaping is paused for maintenance.');
+  assert.equal(brainCalled, false);
+});

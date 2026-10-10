@@ -37,7 +37,7 @@ Avoid at first: schema changes, billing, auth, data deletion, cross-tenant anyth
 
 ## 5. Add the engine
 
-- Build the guard first, test it with hand-written patches, then add an interpreter.
+- Build the guard first and test it with hand-written patches. Then add the brain layer, starting with a deterministic rule-based brain and putting the AI models behind the same contract.
 - Start with personal scope only. Add org scope once the audit and rollback paths are proven.
 - Put the feature behind a flag, for internal users first.
 

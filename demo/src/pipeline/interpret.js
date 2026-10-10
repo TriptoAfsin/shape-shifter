@@ -1,4 +1,4 @@
-// Intent -> shape patch.
+// Brain layer: intent -> shape patch.
 // This is a deterministic stand-in for an LLM so the demo runs offline. A model-backed
 // interpreter has the same contract: free text in, a proposal or a question out.
 // Nothing downstream trusts it: every proposal goes through the guard.
@@ -46,6 +46,10 @@ const RULES = [
     },
   },
   {
+    match: /\b(charts?|graphs?|plot|donut|pie|ring|bars?)\b/,
+    build: ({ text, shape }) => chartRule(text, shape.views[VIEW].charts ?? []),
+  },
+  {
     match: /\bmy region\b/,
     build: () => ({ summary: "Show only deals in the viewer's region", ops: [set('filter', { field: 'region', eq: '$me.region' })] }),
   },
@@ -89,6 +93,52 @@ const RULES = [
     },
   },
 ];
+
+const MEASURES = {
+  sum: (field) => `Total ${label(field).toLowerCase()}`,
+  avg: (field) => `Average ${label(field).toLowerCase()}`,
+  count: () => 'Deals',
+};
+const chartTitle = (c) => `${MEASURES[c.measure.agg](c.measure.field)} by ${label(c.groupBy).toLowerCase()}`;
+
+function chartRule(text, charts) {
+  const at = (i) => `/views/${VIEW}/charts/${i}`;
+  const byPhrase = text.match(/\bby\s+([a-z ]+)/)?.[1] ?? '';
+  const groupBy = byPhrase ? findField(byPhrase) : null;
+  const type = /\b(donut|pie|ring)\b/.test(text) ? 'donut' : /\bbars?\b/.test(text) ? 'bar' : null;
+  const measure = /\bmargin\b/.test(text)
+    ? { agg: 'avg', field: 'margin' }
+    : /\b(value|amount|revenue|pipeline|worth)\b/.test(text)
+      ? { agg: 'sum', field: 'value' }
+      : /\b(count|number|how many|deals)\b/.test(text)
+        ? { agg: 'count' }
+        : { agg: 'sum', field: 'value' };
+
+  if (/\b(hide|remove|drop|delete)\b/.test(text)) {
+    if (charts.length === 0) return { question: 'There are no charts to remove.' };
+    const i = groupBy ? charts.findIndex((c) => c.groupBy === groupBy) : charts.length - 1;
+    if (i < 0) return { question: `There is no chart by ${label(groupBy).toLowerCase()}. Which one should go?` };
+    return { summary: `Remove the "${chartTitle(charts[i])}" chart`, ops: [{ op: 'remove', path: at(i) }] };
+  }
+
+  if (!groupBy) {
+    // "make it a donut" restyles the most recent chart.
+    if (type && charts.length) {
+      const i = charts.length - 1;
+      return { summary: `Show "${chartTitle(charts[i])}" as a ${type} chart`, ops: [{ op: 'set', path: `${at(i)}/type`, value: type }] };
+    }
+    return { question: 'Chart what, grouped by which field? For example: "chart value by region".' };
+  }
+
+  const same = charts.findIndex((c) => c.groupBy === groupBy && c.measure.agg === measure.agg && c.measure.field === measure.field);
+  if (same >= 0) {
+    if (!type || type === charts[same].type) return { question: `"${chartTitle(charts[same])}" is already on the page. Want it as a ${charts[same].type === 'bar' ? 'donut' : 'bar'} instead?` };
+    return { summary: `Show "${chartTitle(charts[same])}" as a ${type} chart`, ops: [{ op: 'set', path: `${at(same)}/type`, value: type }] };
+  }
+
+  const chart = { id: `${measure.agg}-${measure.field ?? 'deals'}-by-${groupBy}`, type: type ?? 'bar', groupBy, measure };
+  return { summary: `Add a ${chart.type} chart: ${chartTitle(chart)}`, ops: [{ op: 'add', path: `${at('-')}`, value: chart }] };
+}
 
 /**
  * @param {string} intent  what the person typed

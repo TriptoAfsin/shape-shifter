@@ -12,7 +12,7 @@ Use this before calling a shapeshifting design done, and when reviewing one.
 ## Authority
 
 - [ ] Every change has a scope (personal/team/org), and personal is the default.
-- [ ] Scope is authorized by role on the server, not by the interpreter.
+- [ ] Scope is authorized by role on the server, not by the brain layer.
 - [ ] Org-wide workflow changes require preview and possibly a second approver.
 - [ ] Identity comes from the session, never from the request body or the model.
 
@@ -21,12 +21,12 @@ Use this before calling a shapeshifting design done, and when reviewing one.
 - [ ] Redaction happens in the core before rendering. Shapes can hide data but never reveal it.
 - [ ] The permission check covers every field a patch newly references (columns, filters, sorts, groupings, automations).
 - [ ] Viewer tokens (`$me.*`) are resolved server-side.
-- [ ] The interpreter gets the minimum context: schema vocabulary and the current shape, not bulk records.
+- [ ] The brain layer gets the minimum context: schema vocabulary and the current shape, not bulk records.
 
 ## Prompt injection & abuse
 
 - [ ] Text inside records, emails or attachments cannot change scope, role or allowlist. The guard is deterministic and outside the model.
-- [ ] The interpreter has no tools besides "emit patch" and "ask question".
+- [ ] The brain layer has no tools besides "emit patch" and "ask question".
 - [ ] Rate-limit proposals, and log every proposal, rejection and commit.
 - [ ] Violations are explained in plain language without leaking restricted values.
 
@@ -41,6 +41,6 @@ Use this before calling a shapeshifting design done, and when reviewing one.
 
 ## Quality
 
-- [ ] Tests cover each guard rule with a rejecting case (see SKILL.md step 7).
-- [ ] Evals run a set of real user intents against the interpreter: measure the right patch, the right clarification and the right refusal.
-- [ ] A deterministic interpreter exists as a fallback and test double.
+- [ ] Tests cover each guard rule with a rejecting case (see SKILL.md step 8).
+- [ ] Evals run a set of real user intents against the brain layer: measure the right patch, the right clarification and the right scope.
+- [ ] A deterministic brain exists as a fallback and test double.

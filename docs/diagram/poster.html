@@ -28,6 +28,7 @@ const C = {
   adapt: '#2f5bea', adaptBg: '#eef2fe',
   constraint: '#c0392b', constraintBg: '#fcefed',
   persist: '#7048e8', persistBg: '#f3effe',
+  brain: '#c2255c', brainBg: '#fdf0f5',
 };
 const HAND = 'Kalam, cursive', SANS = 'Inter, system-ui, sans-serif', MONO = 'JetBrains Mono, monospace';
 let seed = 11;
@@ -63,6 +64,21 @@ function pill(x, y, w, h, label, stroke) {
   text(x + w / 2, y + h / 2 + 8, label, { font: HAND, size: 21, weight: 700, color: stroke, anchor: 'middle' });
 }
 
+
+// Hand-drawn brain (same sketch as the architecture diagram).
+function drawBrain(x, y, k = 1) {
+  const P = (d) => d.replace(/(-?\d+(?:\.\d+)?),(-?\d+(?:\.\d+)?)/g, (_, a, b) => `${x + a * k},${y + b * k}`);
+  add(rc.path(P('M 12,70 C 0,40 28,10 58,20 C 72,2 112,0 124,20 C 156,14 176,46 160,70 C 178,92 150,122 122,110 C 108,128 72,126 62,110 C 40,124 2,108 12,70 Z'),
+    { seed: seed++, roughness: 1.2, stroke: C.brain, strokeWidth: 1.8, fill: '#fff', fillStyle: 'solid' }));
+  const line = (d, w = 1.5) => add(rc.path(P(d), { seed: seed++, roughness: 1, stroke: C.brain, strokeWidth: w }));
+  line('M 86,14 C 74,44 98,70 84,112', 1.7);
+  line('M 26,48 C 40,36 52,58 66,46');
+  line('M 104,40 C 116,30 132,52 148,42');
+  line('M 22,84 C 38,72 50,96 66,84');
+  line('M 102,80 C 116,68 130,92 152,82');
+  line('M 106,114 C 110,130 108,142 102,152', 1.8);
+}
+
 /* ---------- header ---------- */
 text(60, 92, 'A CONCEPT BY TRIPTOAFSIN', { size: 14, weight: 600, color: C.muted, spacing: 2 });
 text(56, 172, 'Shapeshifting Software', { font: HAND, size: 78, weight: 700 });
@@ -74,24 +90,31 @@ box(190, 300, 700, 92, { stroke: C.intent, fill: C.intentBg });
 text(540, 343, '“Show only my region and add manager', { font: HAND, size: 25, anchor: 'middle' });
 text(540, 373, 'approval before deals are Won.”', { font: HAND, size: 25, anchor: 'middle' });
 text(206, 322, 'YOU', { size: 11, weight: 600, color: C.intent, spacing: 1.5 });
-arrow(540, 396, 540, 448, { color: C.intent });
+arrow(400, 396, 255, 450, { color: C.intent });
 
-/* ---------- engine ---------- */
-box(40, 455, 1000, 210, { stroke: C.line, dash: [8, 7], sw: 1.3 });
-text(60, 482, 'SHAPE ENGINE', { size: 12, weight: 600, color: C.muted, spacing: 1.5 });
+/* ---------- brain harness + engine ---------- */
+box(40, 455, 430, 210, { stroke: C.brain, fill: C.brainBg, sw: 1.8 });
+text(60, 482, 'BRAIN HARNESS · AI models', { size: 12, weight: 600, color: C.brain, spacing: 1.5 });
+drawBrain(58, 500, 0.82);
+[['understand', 0], ['clarify', 1], ['scope', 2], ['plan', 3]].forEach(([t, i]) => {
+  text(232, 524 + i * 30, `${i + 1}  ${t}`, { font: HAND, size: 22, weight: 700, color: C.brain });
+});
+text(60, 650, 'fixed instructions · 2 tools · budgets · traces', { size: 13, color: C.brain });
+arrow(472, 560, 508, 560, { color: C.brain, sw: 1.8 });
+
+box(510, 455, 530, 210, { stroke: C.line, dash: [8, 7], sw: 1.3 });
+text(530, 482, 'SHAPE ENGINE · deterministic', { size: 12, weight: 600, color: C.muted, spacing: 1.5 });
 const steps = [
-  ['Interpret', ['LLM turns words', 'into a shape patch.', 'Data, never code.'], C.intent, C.intentBg],
-  ['Clarify', ['Not sure what', 'you meant? It asks', 'before it acts.'], C.intent, C.intentBg],
-  ['Guard', ['Scope, permissions,', 'schema, invariants.', 'Deterministic.'], C.constraint, C.constraintBg],
-  ['Preview', ['Sandbox render', 'and a plain-', 'language diff.'], C.adapt, C.adaptBg],
-  ['Apply', ['New version.', 'Scoped. One-step', 'rollback.'], C.persist, C.persistBg],
+  ['Guard', ['Scope · permissions', 'schema · invariants'], C.constraint, C.constraintBg],
+  ['Preview', ['Sandbox render +', 'plain-language diff.'], C.adapt, C.adaptBg],
+  ['Apply', ['New version.', 'One-step undo.'], C.persist, C.persistBg],
 ];
-const SW = 172, SG = 25, SX = 60, SY = 498, SH = 150;
+const SW = 152, SG = 21, SX = 530, SY = 498, SH = 150;
 steps.forEach(([title, lines, stroke, fill], i) => {
   const x = SX + i * (SW + SG);
   box(x, SY, SW, SH, { stroke, fill, sw: 1.8 });
-  text(x + 14, SY + 36, `${i + 1}  ${title}`, { font: HAND, size: 25, weight: 700, color: stroke });
-  text(x + 14, SY + 70, lines, { size: 15, lh: 21 });
+  text(x + 14, SY + 36, title, { font: HAND, size: 25, weight: 700, color: stroke });
+  text(x + 14, SY + 70, lines, { size: 14, lh: 20 });
   if (i < steps.length - 1) arrow(x + SW + 2, SY + SH / 2, x + SW + SG - 2, SY + SH / 2, { sw: 1.4 });
 });
 arrow(540, 668, 540, 712, { color: C.persist });
@@ -117,7 +140,7 @@ text(62, 897, 'CORE · immutable · the model reads it, never writes it', { size
 
 /* ---------- pillars ---------- */
 text(60, 1056, 'FOUR PILLARS', { size: 12, weight: 600, color: C.muted, spacing: 1.5 });
-[['Intent', 'ask in your', 'own words', C.intent, C.intentBg],
+[['Intent', 'ask in words;', 'the brain reads it', C.intent, C.intentBg],
  ['Adaptation', 'UI and workflows', 'reshape', C.adapt, C.adaptBg],
  ['Constraint', 'rules and security', 'never bend', C.constraint, C.constraintBg],
  ['Persistence', 'versioned, scoped,', 'reversible', C.persist, C.persistBg]].forEach(([t, a, b, s, f], i) => {
@@ -129,7 +152,7 @@ text(60, 1056, 'FOUR PILLARS', { size: 12, weight: 600, color: C.muted, spacing:
 
 /* ---------- footer ---------- */
 add(rc.line(60, 1206, 1020, 1206, { seed: seed++, stroke: C.line, strokeWidth: 1 }));
-text(60, 1262, 'The model proposes. The core decides.', { font: HAND, size: 40, weight: 700 });
+text(60, 1262, 'The brain proposes. The core decides.', { font: HAND, size: 40, weight: 700 });
 text(60, 1306, 'github.com/TriptoAfsin/shape-shifter', { font: MONO, size: 16, color: C.muted });
 text(1020, 1306, '#ShapeshiftingSoftware', { size: 16, weight: 600, color: C.adapt, anchor: 'end' });
 </script>

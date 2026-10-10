@@ -6,6 +6,8 @@ export const OPS = Object.freeze(['set', 'add', 'remove']);
 export const RESHAPEABLE = Object.freeze([
   /^\/views\/[a-z]+\/(title|layout|groupBy|filter|sort)$/,
   /^\/views\/[a-z]+\/columns\/(\d+|-)$/,
+  /^\/views\/[a-z]+\/charts\/(\d+|-)$/,
+  /^\/views\/[a-z]+\/charts\/\d+\/type$/,
   /^\/workflow\/gates\/(\d+|-)$/,
 ]);
 

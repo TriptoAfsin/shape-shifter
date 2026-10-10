@@ -17,8 +17,8 @@ The home of **Shapeshifting Software**, a concept and reference architecture by 
 
 - **Do not commit, push, tag or open PRs.** The maintainer commits by hand. Leave changes in the working tree and suggest a commit message instead.
 - **Authorship:** TriptoAfsin is the sole author. Never add `Co-Authored-By` trailers, AI attribution lines or "Generated with" footers to commits, PRs, docs or code.
-- Keep the terminology consistent with `ARCHITECTURE.md`: *core*, *shape*, *shape layer*, *shape patch*, *shape engine*, *guard*, *shape registry*, *overlay*, *scope*, *invariant*, *effective shape*.
-- The guiding rule is **"the model proposes, the core decides."** Do not add anything that lets model output execute, reach non-allowlisted paths or bypass the guard.
+- Keep the terminology consistent with `ARCHITECTURE.md`: *brain layer*, *brain harness*, *core*, *shape*, *shape layer*, *shape patch*, *shape engine*, *guard*, *shape registry*, *overlay*, *scope*, *invariant*, *effective shape*.
+- The guiding rule is **"the brain proposes, the core decides."** Do not add anything that lets model output execute, reach non-allowlisted paths or bypass the guard.
 
 ## Demo
 
@@ -32,7 +32,7 @@ npm test    # node:test, must stay green
 - Style: 2-space indent, single quotes, semicolons, small pure functions, short comments that explain *why*.
 - `src/core/` is the immutable core. Changes there are design changes, so update `ARCHITECTURE.md` too.
 - Every new guard rule needs a rejecting test in `demo/test/`.
-- The interpreter is a deterministic stand-in for an LLM. Any model-backed interpreter must keep the same contract (`proposal | clarify`) and must stay optional.
+- `src/pipeline/interpret.js` is the brain layer: a deterministic stand-in for the AI models. Any model-backed brain must keep the same contract (`proposal | clarify`), run through `src/pipeline/harness.js`, and stay optional (the demo must run with no API key).
 
 ## Diagram
 

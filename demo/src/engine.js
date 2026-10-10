@@ -1,22 +1,25 @@
-// The shape engine: intent -> interpret -> guard -> preview -> apply -> (rollback).
+// intent -> brain (inside its harness) -> guard -> preview -> apply -> (rollback).
 
 import { randomUUID } from 'node:crypto';
 import { DEALS } from './core/domain.js';
 import { canShape, redact } from './core/policy.js';
 import { guard } from './pipeline/guard.js';
+import { createHarness } from './pipeline/harness.js';
 import { interpret as defaultInterpreter } from './pipeline/interpret.js';
 import { ShapeRegistry } from './shape/registry.js';
 import { BASE_SHAPE, visibleShape } from './shape/spec.js';
 
-export function createEngine({ interpret = defaultInterpreter } = {}) {
+export function createEngine({ interpret = defaultInterpreter, harness: harnessOptions } = {}) {
   const registry = new ShapeRegistry(BASE_SHAPE);
+  const harness = createHarness(interpret, harnessOptions);
   const pending = new Map();
 
   return {
     registry,
+    traces: (user) => harness.traces(user.id),
 
     async propose(user, intent) {
-      const result = await interpret(intent, { user, shapeFor: (scope) => registry.baseFor(user, scope) });
+      const result = await harness.run(intent, { user, shapeFor: (scope) => registry.baseFor(user, scope) });
       if (result.kind === 'clarify') return result;
 
       const verdict = guard(result, { user, base: registry.baseFor(user, result.scope) });

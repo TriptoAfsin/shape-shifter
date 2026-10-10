@@ -15,6 +15,7 @@ const engine = createEngine();
 
 const routes = {
   'GET /api/view': ({ user }) => engine.view(user),
+  'GET /api/traces': ({ user }) => engine.traces(user).slice(-20),
   'POST /api/propose': ({ user, body }) => engine.propose(user, String(body.intent ?? '')),
   'POST /api/apply': ({ user, body }) => engine.apply(user, body.id),
   'POST /api/rollback': ({ user, body }) => engine.rollback(user, body.scope === 'org' ? 'org' : 'personal'),

@@ -6,7 +6,7 @@
 2. Shape patch
 3. Reshapeable surface
 4. Guard order
-5. Interpreter contract
+5. Brain layer contract
 6. Registry and scopes
 
 ## 1. Shape spec
@@ -87,10 +87,10 @@ Run the checks cheapest and most decisive first, and collect every violation:
 
 Re-run the whole guard at commit time against the current base.
 
-## 5. Interpreter contract
+## 5. Brain layer contract
 
 ```ts
-type Interpret = (intent: string, ctx: {
+type Brain = (intent: string, ctx: {
   user: { id: string; role: string };          // no secrets
   shapeFor: (scope: Scope) => Shape;            // current base for that scope
   vocabulary: CorePublicVocabulary;             // field ids/labels, stages, capabilities
@@ -101,7 +101,8 @@ type Interpret = (intent: string, ctx: {
 ```
 
 - With an LLM, force structured output (tool schema = patch schema) and low temperature.
-- Treat record contents as untrusted. Do not paste raw user data into the interpreter prompt unless it is needed.
+- Treat record contents as untrusted. Do not paste raw user data into the brain's prompt unless it is needed.
+- See [brain-layer.md](brain-layer.md) for the prompt skeleton, tool schema and evals.
 - Ask a clarifying question when a required parameter is missing, several fields match, or the scope is org/workflow-level and not stated.
 
 ## 6. Registry and scopes

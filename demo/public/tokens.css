@@ -1,0 +1,76 @@
+/* Hallmark · tokens · theme: custom (repo brand: shapeshifting sketchbook)
+ * paper oklch(98.2% 0.005 265) · accent oklch(52% 0.2 265) blue
+ * axes: light / handwritten-display / cool
+ */
+:root {
+  /* paper + ink, tinted toward the blue anchor */
+  --color-paper: oklch(98.2% 0.005 265);
+  --color-paper-2: oklch(95.8% 0.009 265);
+  --color-surface: oklch(99.4% 0.003 265);
+  --color-rule: oklch(89% 0.012 265);
+  --color-rule-strong: oklch(80% 0.016 265);
+  --color-muted: oklch(49% 0.022 265);
+  --color-ink: oklch(23% 0.026 265);
+  --color-ink-inverse: oklch(98.6% 0.004 265);
+
+  /* the one accent: adaptation */
+  --color-accent: oklch(52% 0.2 265);
+  --color-accent-strong: oklch(44% 0.2 265);
+  --color-accent-soft: oklch(95% 0.03 265);
+  --color-focus: oklch(52% 0.2 265);
+
+  /* state colours, from the four pillars, used only for status */
+  --color-ask: oklch(50% 0.12 65);
+  --color-ask-line: oklch(72% 0.13 75);
+  --color-ask-soft: oklch(96.5% 0.035 85);
+  --color-block: oklch(50% 0.18 28);
+  --color-block-soft: oklch(96.5% 0.025 28);
+  --color-keep: oklch(50% 0.2 292);
+  --color-keep-soft: oklch(96.5% 0.025 292);
+  --color-ok: oklch(52% 0.13 155);
+  --color-brain: oklch(50% 0.18 0);
+  --color-brain-soft: oklch(96.5% 0.02 0);
+
+  /* chart series: one hue, stepped lightness, so charts never fight the accent */
+  --color-series-1: oklch(48% 0.2 265);
+  --color-series-2: oklch(60% 0.16 265);
+  --color-series-3: oklch(71% 0.12 265);
+  --color-series-4: oklch(81% 0.08 265);
+  --color-series-5: oklch(89% 0.045 265);
+  --color-series-6: oklch(40% 0.12 265);
+
+  --shadow-lift: 0 10px 24px -14px oklch(30% 0.08 265 / 0.35);
+  --shadow-panel: 0 1px 0 oklch(89% 0.012 265), 0 18px 40px -28px oklch(30% 0.08 265 / 0.35);
+
+  --font-display: "Kalam", "Segoe Print", cursive;
+  --font-body: "Geist", ui-sans-serif, "Segoe UI", sans-serif;
+  --font-mono: "Geist Mono", ui-monospace, "Cascadia Mono", monospace;
+
+  --text-xs: 0.75rem;
+  --text-sm: 0.8125rem;
+  --text-md: 0.9375rem;
+  --text-lg: 1.125rem;
+  --text-xl: 1.5rem;
+  --text-2xl: 2.25rem;
+
+  --space-3xs: 0.25rem;
+  --space-2xs: 0.5rem;
+  --space-xs: 0.75rem;
+  --space-sm: 1rem;
+  --space-md: 1.5rem;
+  --space-lg: 2rem;
+  --space-xl: 3rem;
+
+  --radius-sm: 6px;
+  --radius-md: 10px;
+  --radius-lg: 14px;
+  --radius-pill: 999px;
+
+  --ease-out: cubic-bezier(0.16, 1, 0.3, 1);
+  --ease-in: cubic-bezier(0.7, 0, 0.84, 0);
+  --ease-in-out: cubic-bezier(0.65, 0, 0.35, 1);
+  --dur-micro: 120ms;
+  --dur-short: 220ms;
+  --dur-long: 420ms;
+  --stagger: 70ms;
+}

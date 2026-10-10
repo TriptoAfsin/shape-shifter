@@ -3,44 +3,99 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Shapeshifting CRM</title>
+  <title>Shapeshift CRM</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Kalam:wght@400;700&family=Geist:wght@400;500;600&family=Geist+Mono:wght@400;500&display=swap" />
+  <link rel="stylesheet" href="tokens.css" />
   <link rel="stylesheet" href="style.css" />
 </head>
 <body>
-  <header class="bar">
-    <div class="brand"><span class="mark">◇</span> Shapeshifting CRM <span class="tag">demo</span></div>
-    <label class="who">Signed in as
-      <select id="user">
-        <option value="ana">Ana: rep, EMEA</option>
-        <option value="ben">Ben: manager, NA</option>
-        <option value="cy">Cy: admin, APAC</option>
-      </select>
-    </label>
+  <header class="top reveal" style="--i: 0">
+    <div class="brand">
+      <span class="wordmark">Shapeshift <b>CRM</b></span>
+      <span class="brand-note">a working demo of shapeshifting software</span>
+    </div>
+    <div class="who" role="group" aria-label="Signed in as">
+      <span class="who-label">Signed in as</span>
+      <div class="seg" id="users">
+        <span class="seg-thumb" aria-hidden="true"></span>
+        <button type="button" data-user="ana" aria-pressed="true"><b>Ana</b><small>rep · EMEA</small></button>
+        <button type="button" data-user="ben" aria-pressed="false"><b>Ben</b><small>manager · NA</small></button>
+        <button type="button" data-user="cy" aria-pressed="false"><b>Cy</b><small>admin · APAC</small></button>
+      </div>
+    </div>
   </header>
 
-  <main>
-    <section class="shift">
-      <form id="intent-form">
-        <input id="intent" autocomplete="off" placeholder="Describe how this should work for you…" />
-        <button type="submit">Reshape</button>
+  <main class="bench">
+    <aside class="console reveal" style="--i: 1" aria-label="Shape console">
+      <form id="intent-form" class="ask">
+        <label for="intent" class="ask-label">Tell the app how it should work for you</label>
+        <div class="scenario">
+          <label for="scenario" class="scenario-label">Scenario</label>
+          <div class="select">
+            <select id="scenario"></select>
+          </div>
+          <p class="scenario-note" id="scenario-note"></p>
+          <div class="prompts" id="prompts" aria-label="Example requests"></div>
+        </div>
+        <div class="ask-row">
+          <input id="intent" autocomplete="off" spellcheck="false" placeholder="e.g. show only my region" />
+          <button type="submit" class="btn btn-primary" id="reshape">Reshape</button>
+        </div>
+        <p class="coach" id="coach" hidden>
+          <svg viewBox="0 0 60 40" aria-hidden="true"><path d="M52 34 C 40 30, 22 26, 12 8 M12 8 l -1 9 M12 8 l 8 4" /></svg>
+          Pick a scenario and tap a request, or type your own.
+        </p>
+        <p class="brain-note">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5a3 3 0 1 0-5.997.125 4 4 0 0 0-2.526 5.77 4 4 0 0 0 .556 6.588A4 4 0 1 0 12 18Z"/><path d="M12 5a3 3 0 1 1 5.997.125 4 4 0 0 1 2.526 5.77 4 4 0 0 1-.556 6.588A4 4 0 1 1 12 18Z"/><path d="M15 13a4.5 4.5 0 0 1-3-4 4.5 4.5 0 0 1-3 4"/></svg>
+          <span>In a real product, this box takes <b>anything</b>. An AI brain layer, run inside a harness, reads open-ended requests and turns them into shape patches. Here a rule-based stand-in plays the brain, so no API key is needed. Stick close to the scenarios.</span>
+        </p>
       </form>
-      <div class="chips" id="chips"></div>
-      <div id="proposal"></div>
-    </section>
 
-    <section class="app">
-      <div class="app-head">
-        <h1 id="title">Pipeline</h1>
-        <div class="flow" id="flow" title="Workflow: stages and gates"></div>
-      </div>
-      <div id="view"></div>
-    </section>
+      <ol class="engine" id="engine" aria-label="Shape engine">
+        <li data-step="interpret"><i></i><span>Brain</span></li>
+        <li data-step="clarify"><i></i><span>Clarify</span></li>
+        <li data-step="guard"><i></i><span>Guard</span></li>
+        <li data-step="preview"><i></i><span>Preview</span></li>
+        <li data-step="apply"><i></i><span>Apply</span></li>
+      </ol>
 
-    <aside class="history">
-      <h2>Shape history</h2>
-      <div id="history"></div>
+      <div id="result" class="result" aria-live="polite"></div>
+
+      <section class="tour" aria-labelledby="tour-title">
+        <div class="tour-head">
+          <h2 id="tour-title">Try the guardrails</h2>
+          <span class="tour-count" id="tour-count">0 of 5</span>
+        </div>
+        <div class="meter" aria-hidden="true"><span id="meter"></span></div>
+        <ol class="missions" id="missions"></ol>
+      </section>
+
+      <section class="history" aria-labelledby="history-title">
+        <h2 id="history-title">Shape history</h2>
+        <div id="history"></div>
+      </section>
     </aside>
+
+    <section class="canvas reveal" style="--i: 2" aria-labelledby="view-title">
+      <div class="canvas-head">
+        <div class="title-row">
+          <h1 id="view-title">Pipeline</h1>
+          <span class="scope-chip" id="scope-chip" hidden></span>
+        </div>
+        <ol class="flow" id="flow" aria-label="Deal workflow"></ol>
+      </div>
+      <div class="kpis" id="kpis" aria-label="Pipeline numbers"></div>
+      <div class="charts" id="charts"></div>
+      <div id="view" class="view"></div>
+    </section>
   </main>
+
+  <footer class="foot">
+    <span>The brain proposes. The core decides.</span>
+    <a href="https://github.com/TriptoAfsin/shape-shifter">github.com/TriptoAfsin/shape-shifter</a>
+  </footer>
 
   <script type="module" src="app.js"></script>
 </body>
